@@ -11,13 +11,14 @@ Architecture kernel for personal Go projects: DDD + hexagonal service structure,
 
 ## Packages
 
-Planned (not published yet). Everything lives in a single Go module, so once a package lands it is importable directly:
+Everything lives in a single Go module:
 
 ```go
 import "github.com/KucherenkoIvan/go-kernel/ddd"
 ```
 
-- `ddd` — base building blocks the docs reference: `EventRecorder`, `Event`, `TxManager` / `Transaction` / `NoTransaction`, `Clock`, `IDGenerator`, `NewEntityID` (UUIDv7), `DomainError` marker + test fakes.
+- [`ddd`](ddd/) — base building blocks the docs reference: `Event[T]` + `EventRecorder[E]`, `TxManager` / `Transaction` / `NoTransaction`, `Clock`, `IDGenerator`, `NewEntityID` (UUIDv7), `DomainError` marker. Zero dependencies.
+- [`ddd/dddtest`](ddd/dddtest/) — test fakes for the ports: `FakeTxManager`, `FixedClock`, `SequenceIDGenerator`.
 
 ### Installing from a private repo
 

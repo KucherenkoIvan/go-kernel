@@ -1,3 +1,3 @@
 module github.com/KucherenkoIvan/go-kernel
 
-go 1.25
+go 1.23
