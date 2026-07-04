@@ -4,7 +4,7 @@ go-kernel is a personal architecture kernel: one Go module of building blocks (d
 
 ## Hard rules
 
-1. **Privacy.** This is a personal project. Never reference the author's employer, work projects, internal repository/package names, or copy content from other private codebases — in code, docs, comments, commit messages, or examples. A local pre-commit hook scans staged changes for known-sensitive terms; never bypass it (`--no-verify`). When unsure whether a term is safe, don't write it.
+1. **Privacy.** This is a personal project. Never reference the author's employer, work projects, internal repository/package names, or copy content from other private codebases — in code, docs, comments, commit messages, or examples. Before every commit, grep the staged changes for such references and scrub any hit (the concrete term list is deliberately kept outside this repo — a tracked denylist would leak the names it forbids; no git hooks either, by the author's preference). When unsure whether a term is safe, don't write it.
 2. **`ddd` stays zero-dependency** — stdlib and itself only (depguard-enforced). It is the one package domain code imports; a dependency there infects every project.
 3. **`contracts/gen/` is generated** — never hand-edit. Change protos under `contracts/proto/`, then `make proto`.
 4. **There is no CI — you are the CI.** `make lint` and `make test` must pass before every commit. Run `make integration` when touching anything with an integration surface (postgres, sqlite, kafka, outbox, cache, grpckit) — it needs docker; containers self-provision via testcontainers.
