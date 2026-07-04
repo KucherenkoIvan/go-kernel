@@ -2,19 +2,17 @@ package cache_test
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/KucherenkoIvan/go-kernel/cache"
 	"github.com/KucherenkoIvan/go-kernel/ddd"
+	"github.com/KucherenkoIvan/go-kernel/internal/testinfra"
 )
 
 // The same conformance suite runs against both stores — InMemory always,
-// Redis when TEST_REDIS_URL is set, e.g.:
-//
-//	docker run --rm -d -p 6379:6379 redis:7-alpine
-//	TEST_REDIS_URL=redis://localhost:6379/0 go test ./cache/
+// Redis self-provisioned via testcontainers when INTEGRATION=1
+// (`make integration`) or taken from TEST_REDIS_URL when set.
 func TestInMemory_Conformance(t *testing.T) {
 	store := cache.NewInMemory()
 	t.Cleanup(func() { _ = store.Close() })
@@ -22,11 +20,7 @@ func TestInMemory_Conformance(t *testing.T) {
 }
 
 func TestRedis_Conformance(t *testing.T) {
-	url := os.Getenv("TEST_REDIS_URL")
-	if url == "" {
-		t.Skip("TEST_REDIS_URL is not set")
-	}
-	store, err := cache.NewRedis(context.Background(), url)
+	store, err := cache.NewRedis(context.Background(), testinfra.RedisURL(t))
 	if err != nil {
 		t.Fatal(err)
 	}

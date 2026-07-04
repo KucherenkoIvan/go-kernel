@@ -76,8 +76,10 @@ make tools        # one-time: buf, protoc plugins, golangci-lint
 make test         # unit tests (integration tests self-skip)
 make lint         # gofmt + go vet + golangci-lint (.golangci.yml)
 make proto        # regenerate contracts
-make integration  # full suite against real postgres/redpanda/redis in docker
+make integration  # full suite; postgres/redpanda/redis self-provision via testcontainers
 ```
+
+Integration tests resolve their infrastructure in order: explicit `TEST_*_URL` env (your own containers, fastest iteration) → testcontainers when `INTEGRATION=1` → skip. See [internal/testinfra](internal/testinfra/README.md).
 
 The linter also guards one architectural invariant: the `ddd` package must stay zero-dependency (depguard rule).
 

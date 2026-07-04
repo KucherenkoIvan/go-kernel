@@ -88,7 +88,7 @@ app.Adapter{Name: "redis", Close: func(context.Context) error { return store.Clo
 
 ## Testing
 
-`cache.NewInMemory()` *is* the fake — no mocks. Code written against `cache.Store` runs identically in tests and in a single-binary deployment. The conformance suite in [`cache/cache_test.go`](../../cache/cache_test.go) runs against Redis too when `TEST_REDIS_URL` is set (`docker run --rm -d -p 6379:6379 redis:7-alpine`).
+`cache.NewInMemory()` *is* the fake — no mocks. Code written against `cache.Store` runs identically in tests and in a single-binary deployment. The conformance suite in [`cache/cache_test.go`](../../cache/cache_test.go) runs against a real Redis too — self-provisioned via testcontainers under `make integration`, or your own via `TEST_REDIS_URL`.
 
 ## Anti-patterns
 

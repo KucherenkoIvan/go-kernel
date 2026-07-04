@@ -5,28 +5,24 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"os"
 	"sync"
 	"testing"
 
 	eventsexamplev1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/events/example/v1"
 	"github.com/KucherenkoIvan/go-kernel/contracts/kafkacontracts"
 	"github.com/KucherenkoIvan/go-kernel/ddd"
+	"github.com/KucherenkoIvan/go-kernel/internal/testinfra"
 	"github.com/KucherenkoIvan/go-kernel/kafka"
 	"github.com/KucherenkoIvan/go-kernel/outbox"
 	"github.com/KucherenkoIvan/go-kernel/postgres"
 	"github.com/KucherenkoIvan/go-kernel/requestid"
 )
 
-// Integration tests run only when TEST_POSTGRES_URL is set (no Kafka needed —
+// Integration tests self-provision postgres via testinfra (no Kafka needed —
 // the relay publishes through a fake producer).
 func integrationClient(t *testing.T) *postgres.Client {
 	t.Helper()
-	url := os.Getenv("TEST_POSTGRES_URL")
-	if url == "" {
-		t.Skip("TEST_POSTGRES_URL is not set")
-	}
-	c, err := postgres.Connect(context.Background(), url)
+	c, err := postgres.Connect(context.Background(), testinfra.PostgresURL(t))
 	if err != nil {
 		t.Fatal(err)
 	}

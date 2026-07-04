@@ -97,7 +97,7 @@ The consumer needs no check of its own — it is a `Run` adapter; if it dies, `a
 
 ## Testing
 
-Integration tests are gated on `TEST_KAFKA_BROKERS` and run against a real broker — Redpanda in Docker is the light option (see `kafka/kafka_integration_test.go` for the one-liner). Code that *publishes* is usually tested with a fake `Producer`-port implementation instead; the broker round-trip is the kernel's job to verify, not every feature's.
+Integration tests run against a real broker, self-provisioned via testcontainers: `make integration` (or `INTEGRATION=1 go test ./kafka/`); set `TEST_KAFKA_BROKERS` to use your own instead. Code that *publishes* is usually tested with a fake `Producer`-port implementation; the broker round-trip is the kernel's job to verify, not every feature's.
 
 ## Anti-patterns
 

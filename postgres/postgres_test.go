@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"testing/fstest"
 
 	"github.com/KucherenkoIvan/go-kernel/ddd"
+	"github.com/KucherenkoIvan/go-kernel/internal/testinfra"
 )
 
 type foreignTx struct{}
@@ -33,17 +33,12 @@ func TestResolve_ForeignTokenPanics(t *testing.T) {
 	(&Client{}).Resolve(foreignTx{})
 }
 
-// Integration tests run only when TEST_POSTGRES_URL is set, e.g.:
-//
-//	docker run --rm -d -p 5432:5432 -e POSTGRES_PASSWORD=test postgres:17-alpine
-//	TEST_POSTGRES_URL=postgres://postgres:test@localhost:5432/postgres go test ./postgres/
+// Integration tests self-provision postgres via testcontainers when
+// INTEGRATION=1 (`make integration`), use TEST_POSTGRES_URL when set, and
+// skip otherwise.
 func integrationClient(t *testing.T) *Client {
 	t.Helper()
-	url := os.Getenv("TEST_POSTGRES_URL")
-	if url == "" {
-		t.Skip("TEST_POSTGRES_URL is not set")
-	}
-	c, err := Connect(context.Background(), url)
+	c, err := Connect(context.Background(), testinfra.PostgresURL(t))
 	if err != nil {
 		t.Fatal(err)
 	}

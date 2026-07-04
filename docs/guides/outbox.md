@@ -107,7 +107,7 @@ var events ports.OrderEventProducer = kafkaadapter.NewOrderEventPublisher(produc
 
 ## 4. Testing
 
-The relay takes a `RawProducer` interface — tests use a fake and a real Postgres (gated on `TEST_POSTGRES_URL`), no broker needed. `relay.RelayOnce(ctx)` executes one drain manually:
+The relay takes a `RawProducer` interface — tests use a fake and a real Postgres (self-provisioned via testcontainers under `make integration`), no broker needed. `relay.RelayOnce(ctx)` executes one drain manually:
 
 ```go
 producer := &fakeProducer{}

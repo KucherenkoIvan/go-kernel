@@ -14,6 +14,6 @@ _ = cache.SetJSON(ctx, store, "coupon:overview:c-1", model, 5*time.Minute)
 model, ok, _ := cache.GetJSON[CouponOverviewReadModel](ctx, store, "coupon:overview:c-1")
 ```
 
-Both stores pass the same conformance suite; Redis runs when `TEST_REDIS_URL` is set (`docker run --rm -d -p 6379:6379 redis:7-alpine`).
+Both stores pass the same conformance suite; the Redis run self-provisions via testcontainers (`make integration`), or uses `TEST_REDIS_URL` when set.
 
 Guide: [docs/guides/cache.md](../docs/guides/cache.md)

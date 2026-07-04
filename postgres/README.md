@@ -20,6 +20,6 @@ err := db.WithinTx(ctx, func(tx ddd.Transaction) error {
 })
 ```
 
-Integration tests are gated on `TEST_POSTGRES_URL` (`docker run --rm -d -p 5432:5432 -e POSTGRES_PASSWORD=test postgres:17-alpine`).
+Integration tests self-provision postgres via testcontainers (`make integration`), or use `TEST_POSTGRES_URL` when set.
 
 Guide: [docs/guides/postgres.md](../docs/guides/postgres.md) · Embedded twin: [`sqlite`](../sqlite/)

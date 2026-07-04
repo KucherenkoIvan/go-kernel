@@ -6,31 +6,23 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	eventsexamplev1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/events/example/v1"
 	"github.com/KucherenkoIvan/go-kernel/ddd"
+	"github.com/KucherenkoIvan/go-kernel/internal/testinfra"
 	"github.com/KucherenkoIvan/go-kernel/kafka"
 	"github.com/KucherenkoIvan/go-kernel/requestid"
 )
 
-// Integration tests run only when TEST_KAFKA_BROKERS is set, e.g.:
-//
-//	docker run --rm -d -p 9092:9092 redpandadata/redpanda:latest \
-//	  redpanda start --smp 1 --kafka-addr PLAINTEXT://0.0.0.0:9092 \
-//	  --advertise-kafka-addr PLAINTEXT://localhost:9092
-//	TEST_KAFKA_BROKERS=localhost:9092 go test ./kafka/
+// Integration tests self-provision Redpanda via testcontainers when
+// INTEGRATION=1 (`make integration`), use TEST_KAFKA_BROKERS when set, and
+// skip otherwise.
 func brokers(t *testing.T) []string {
 	t.Helper()
-	env := os.Getenv("TEST_KAFKA_BROKERS")
-	if env == "" {
-		t.Skip("TEST_KAFKA_BROKERS is not set")
-	}
-	return strings.Split(env, ",")
+	return testinfra.KafkaBrokers(t)
 }
 
 func discard() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }

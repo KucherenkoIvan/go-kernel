@@ -15,6 +15,6 @@ kafka.Subscribe(consumer, OrderPlaced, func(ctx context.Context, msg *eventsv1.O
 })
 ```
 
-Business-critical events go through the [`outbox`](../outbox/), not direct `Send`. Integration tests are gated on `TEST_KAFKA_BROKERS` (Redpanda in Docker works).
+Business-critical events go through the [`outbox`](../outbox/), not direct `Send`. Integration tests self-provision Redpanda via testcontainers (`make integration`), or use `TEST_KAFKA_BROKERS` when set.
 
 Guide: [docs/guides/kafka.md](../docs/guides/kafka.md) · Contracts: [contracts/](../contracts/)
