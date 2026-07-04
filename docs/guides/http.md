@@ -96,6 +96,10 @@ Every request runs with an id in `c.Request.Context()` — taken from the `x-req
 
 Standard Gin composition — see the [middleware & auth guide](./middleware-auth.md) for the full pattern across both transports.
 
+## Server-rendered HTML
+
+For an HTML UI on the same router (Go templates + htmx, error *pages* coexisting with the JSON contract), see the [web UI guide](./webui.md).
+
 ## Testing
 
 Plain `httptest`, no network — see [`httpapi/httpapi_test.go`](../../httpapi/httpapi_test.go) for the full pattern:

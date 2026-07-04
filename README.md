@@ -47,6 +47,7 @@ Each guide links its package's readme; each package readme links back.
 - [outbox](docs/guides/outbox.md) — the transactional outbox: enqueue atomic with the business tx, relay modes, monitoring
 - [grpc](docs/guides/grpc.md) — `grpckit` servers/clients with the standard interceptor chain + buf-managed `contracts/`
 - [http](docs/guides/http.md) — `httpapi` JSON REST on Gin: uniform error contract, the `gin.Context` containment rule
+- [web UI](docs/guides/webui.md) — `webui` server-rendered HTML + htmx: embedded templates, HTML error pages coexisting with the JSON contract
 - [middleware & auth](docs/guides/middleware-auth.md) — guards vs gateways, the `auth.Principal` pattern on both transports
 - [requestid](docs/guides/requestid.md) — one request id across every hop (HTTP → gRPC → outbox → Kafka)
 
