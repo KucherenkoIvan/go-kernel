@@ -36,7 +36,11 @@ func (r *CouponRepository) GetByID(ctx context.Context, tx ddd.Transaction, id d
 }
 ```
 
-`Open` applies service defaults: WAL journaling (readers don't block the writer), `busy_timeout` 5s (concurrent writers wait instead of failing with SQLITE_BUSY), enforced foreign keys.
+`Open` applies service defaults: WAL journaling (readers don't block the writer), `busy_timeout` 5s (concurrent writers wait instead of failing with SQLITE_BUSY), enforced foreign keys, and **immediate write transactions** — `WithinTx` takes the write lock up front (`BEGIN IMMEDIATE`), which eliminates the deferred read→write upgrade race. That race is nastier than an error: without it, concurrent read-then-write transactions silently lose updates (test-pinned in `concurrency_test.go`).
+
+## Multi-process access (same machine)
+
+WAL exists precisely so multiple *local* processes can share one file — readers never block, writers queue on `busy_timeout`, and immediate transactions remove the upgrade race. So a long-running process and CLI one-shots on the same database are **safe**, given the defaults `Open` sets and short write transactions. What remains unsafe is sharing across *machines or replicas*: WAL coordinates through shared memory (the `-shm` file), which does not work over NFS or between pods — that's postgres territory.
 
 Wiring is the standard set:
 
@@ -64,7 +68,8 @@ The best part: `sqlite.Open(":memory:")` gives every test a real database with z
 
 | Anti-pattern | The right way |
 |-------------|---------------|
-| Sharing one SQLite file between processes/replicas | That is postgres's job — SQLite is per-process |
+| Sharing a SQLite file across machines/replicas (NFS, pods) | That is postgres's job — WAL coordination is same-machine only |
+| Long write transactions with concurrent local processes | Short transactions; compute before, write inside |
 | Porting pg repositories by find-and-replace | Write the sqlite adapter twin consciously; dialects differ at the edges |
 | Skipping WAL/busy_timeout pragmas with a hand-rolled DSN | Use `sqlite.Open` — the defaults are the fix for SQLITE_BUSY |
 | Reaching for the outbox on sqlite | `events.ChannelPublisher` — same port, right guarantee for one process |

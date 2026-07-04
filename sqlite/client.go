@@ -29,10 +29,14 @@ type Client struct {
 
 // Open opens (creating if missing) the database file and applies the
 // service defaults: WAL journaling (readers don't block the writer),
-// busy_timeout 5s (writers wait instead of failing with SQLITE_BUSY), and
-// enforced foreign keys. Use ":memory:" for an in-memory database (tests).
+// busy_timeout 5s (writers wait instead of failing with SQLITE_BUSY),
+// enforced foreign keys, and immediate transactions — WithinTx is a write
+// transaction by architecture convention, and BEGIN IMMEDIATE takes the
+// write lock up front, so the deferred read→write upgrade race (the one
+// SQLITE_BUSY that ignores busy_timeout) cannot happen. Together these make
+// same-machine multi-process access safe. Use ":memory:" for tests.
 func Open(path string) (*Client, error) {
-	dsn := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)", path)
+	dsn := fmt.Sprintf("file:%s?_txlock=immediate&_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)", path)
 
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {

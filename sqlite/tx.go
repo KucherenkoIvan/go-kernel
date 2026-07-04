@@ -38,7 +38,10 @@ func (t *liteTx) AfterCommit(fn func(ctx context.Context)) {
 }
 
 // WithinTx implements ddd.TxManager. Everything inside fn runs in one
-// transaction; if fn returns an error, the transaction is rolled back.
+// WRITE transaction (BEGIN IMMEDIATE — see Open): the write lock is taken
+// up front, so concurrent writers queue on busy_timeout instead of racing
+// the read→write upgrade. Reads that need no transaction use
+// ddd.NoTransaction and never contend.
 //
 // Nested calls are not supported — pass the Transaction token down the call
 // stack instead of starting a new one.
