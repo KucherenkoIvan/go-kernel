@@ -92,9 +92,22 @@ if errors.As(err, &remote) && remote.Code == "coupon_exhausted" {
 }
 ```
 
+## Custom interceptors
+
+Auth, rate limiting, metrics — appended via `WithUnaryInterceptor`, always running *inside* the standard chain, which means: panics recovered, request id already in context, and domain errors returned by an interceptor encoded like handler errors.
+
+```go
+srv := grpckit.NewServer(
+	grpckit.WithLogger(logger),
+	grpckit.WithUnaryInterceptor(AuthInterceptor(verifier)),
+)
+```
+
+See the [middleware & auth guide](./middleware-auth.md) for the full pattern (Principal, exemptions, ordering semantics) on both transports.
+
 ## Request-id propagation
 
-Every handler runs with a request id in context (`grpckit.RequestID(ctx)`) — taken from incoming `x-request-id` metadata or generated. The client interceptor forwards it on outgoing calls, so the id survives service hops. Seed it at the edge with `grpckit.WithRequestID(ctx, id)`.
+Every handler runs with a request id in context (`grpckit.RequestID(ctx)`) — taken from incoming `x-request-id` metadata or generated. The client interceptor forwards it on outgoing calls, so the id survives service hops — including HTTP→gRPC, since the id lives in the shared [`requestid`](../../requestid/) package used by `httpapi` as well. Seed it at the edge with `grpckit.WithRequestID(ctx, id)`.
 
 ## Testing
 

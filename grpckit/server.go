@@ -19,8 +19,9 @@ import (
 )
 
 type serverConfig struct {
-	logger     *slog.Logger
-	errorCodes map[string]codes.Code
+	logger       *slog.Logger
+	errorCodes   map[string]codes.Code
+	interceptors []grpc.UnaryServerInterceptor
 }
 
 // ServerOption customizes NewServer.
@@ -41,6 +42,18 @@ func WithErrorCode(domainCode string, grpcCode codes.Code) ServerOption {
 	return func(c *serverConfig) { c.errorCodes[domainCode] = grpcCode }
 }
 
+// WithUnaryInterceptor appends a custom interceptor (auth, rate limiting,
+// metrics, ...) after the standard chain. May be given multiple times;
+// interceptors run in the order they were added.
+//
+// The standard chain stays outermost, so custom interceptors get its
+// guarantees for free: their panics are recovered, they see the request id
+// in context, and domain errors they return are encoded into rich statuses
+// like any handler error.
+func WithUnaryInterceptor(i grpc.UnaryServerInterceptor) ServerOption {
+	return func(c *serverConfig) { c.interceptors = append(c.interceptors, i) }
+}
+
 // NewServer creates a *grpc.Server with the standard interceptor chain.
 // Register generated services on it as usual, then start it with Run.
 func NewServer(opts ...ServerOption) *grpc.Server {
@@ -59,9 +72,11 @@ func NewServer(opts ...ServerOption) *grpc.Server {
 		return codes.FailedPrecondition
 	}
 
-	return grpc.NewServer(
-		grpc.ChainUnaryInterceptor(serverInterceptor(cfg.logger, codeFor)),
+	chain := append(
+		[]grpc.UnaryServerInterceptor{serverInterceptor(cfg.logger, codeFor)},
+		cfg.interceptors...,
 	)
+	return grpc.NewServer(grpc.ChainUnaryInterceptor(chain...))
 }
 
 // Run listens on addr and serves until ctx is cancelled, then stops
