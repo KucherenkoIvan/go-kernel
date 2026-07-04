@@ -154,6 +154,14 @@ if err := db.Migrate(ctx, sub); err != nil { ... }
 - A migration that adds a column adds its indexes in the same file.
 - Down migrations are a non-goal — roll forward.
 
+## Health check
+
+Register the client on the service's checker — the `/healthz` report then shows postgres as a named entry (see [service runtime](./service-runtime.md)):
+
+```go
+health.Check{Name: "postgres", Check: db.Ping}
+```
+
 ## Testing
 
 `dddtest.FakeTxManager` creates no real transactions — it just invokes the callback and records the token:

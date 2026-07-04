@@ -37,6 +37,12 @@ func TestHandler_AllOK(t *testing.T) {
 	if report.Status != health.StatusOK || len(report.Checks) != 2 {
 		t.Fatalf("report = %+v", report)
 	}
+	// the 200 body still lists every registered check with its positive status
+	for name, result := range report.Checks {
+		if result.Status != health.StatusOK || result.Error != "" {
+			t.Fatalf("check %s in a 200 report: %+v", name, result)
+		}
+	}
 }
 
 func TestHandler_DegradedWithDetails(t *testing.T) {

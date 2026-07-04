@@ -74,13 +74,22 @@ For telemetry and side-channel notifications, where losing a message on a crash 
 
 ```go
 producer, err := kafka.NewProducer(kafka.ProducerConfig{Brokers: cfg.KafkaBrokers})
-// health: health.Check{Name: "kafka", Check: producer.Ping}
-// lifecycle: app.Adapter{Name: "kafka-producer", Close: producer.Close}
 
 err = kafka.Send(ctx, producer, kafkacontracts.ExampleOrderPlaced,
 	&eventsexamplev1.OrderPlacedEvent{OrderId: string(order.ID())},
 	kafka.WithKey(string(order.ID()))) // same key → same partition → ordered
 ```
+
+## Health check & lifecycle
+
+The producer registers on the service's checker like every dependency (see [service runtime](./service-runtime.md)), and closes through the app runner so buffered messages flush on shutdown:
+
+```go
+health.Check{Name: "kafka", Check: producer.Ping}
+app.Adapter{Name: "kafka-producer", Close: producer.Close}
+```
+
+The consumer needs no check of its own — it is a `Run` adapter; if it dies, `app.Run` shuts the service down, which the orchestrator sees directly.
 
 ## Request-id propagation
 

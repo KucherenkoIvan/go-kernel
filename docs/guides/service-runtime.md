@@ -68,9 +68,19 @@ r.GET("/healthz", gin.WrapH(checker.Handler()))   // readiness probe: 200 / 503 
 checker.RegisterGRPC(srv)                          // standard gRPC health service (aggregate only)
 ```
 
+A healthy service answers 200 — and the body still lists **every registered check** with its positive status, so one curl shows the whole dependency picture, not just "ok":
+
+```json
+{"status":"ok","checks":{"postgres":{"status":"ok"},"kafka":{"status":"ok"}}}
+```
+
+When degraded, the failing checks carry details and the endpoint flips to 503:
+
 ```json
 {"status":"degraded","checks":{"postgres":{"status":"down","error":"connection refused"},"kafka":{"status":"ok"}}}
 ```
+
+**Every infra adapter registers a check** — the kernel clients all expose a compatible `Ping`: `postgres.Client.Ping`, `kafka.Producer.Ping`, `cache.Redis.Ping`, `sqlite.Client.Ping`. Each adapter guide shows its one-liner; forgetting one means a silent blind spot on this endpoint.
 
 **Liveness and readiness are deliberately separate.** If the liveness probe ran the deep checks, a postgres outage would make the orchestrator restart your pods in a loop — fixing nothing and killing in-flight state. `/livez` answers "is the process up", `/healthz` answers "can it do useful work"; only the latter should gate traffic. The gRPC health protocol carries only SERVING/NOT_SERVING, so the detailed report lives on HTTP.
 
