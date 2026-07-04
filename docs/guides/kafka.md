@@ -1,6 +1,6 @@
 # Working with Kafka
 
-Asynchronous communication between services. Contract-first: event schemas are protobuf files in [`contracts/`](../../contracts/), and a contract value pairs the topic with its message type. The runtime side lives in [`kafka`](../../kafka/) (franz-go under the hood — pure Go, no librdkafka/cgo).
+Asynchronous communication between services. Contract-first: event schemas are protobuf files in [`contracts/`](../../contracts/README.md), and a contract value pairs the topic with its message type. The runtime side lives in [`kafka`](../../kafka/README.md) (franz-go under the hood — pure Go, no librdkafka/cgo).
 
 ## 1. Describe the event contract
 

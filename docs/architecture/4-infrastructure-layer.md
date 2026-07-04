@@ -78,3 +78,7 @@ Swapping an implementation is a one-line change in the composition root:
 var events ports.CouponEventProducer = pg.NewEventPublisherOutbox(outbox, db) // via outbox
 var events ports.CouponEventProducer = kafka.NewEventPublisher(producer)     // direct
 ```
+
+---
+
+Next: the [package guides](../../README.md#docs) — how each building block is used in practice.

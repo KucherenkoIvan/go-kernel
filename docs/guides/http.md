@@ -1,6 +1,6 @@
 # HTTP (REST API)
 
-JSON REST APIs on [Gin](https://github.com/gin-gonic/gin). The kernel side lives in [`httpapi`](../../httpapi/) — the HTTP mirror of `grpckit`: same request-id, same two-outcome error contract, same graceful lifecycle.
+JSON REST APIs on [Gin](https://github.com/gin-gonic/gin). The kernel side lives in [`httpapi`](../../httpapi/README.md) — the HTTP mirror of `grpckit`: same request-id, same two-outcome error contract, same graceful lifecycle.
 
 ## Where HTTP sits in the architecture
 
@@ -90,7 +90,7 @@ Two properties worth knowing:
 
 ## Request id
 
-Every request runs with an id in `c.Request.Context()` — taken from the `x-request-id` header or generated — and the response echoes it in the same header. It is shared with `grpckit` through the [`requestid`](../../requestid/) package, so the id survives HTTP → use-case → gRPC hops and appears in every log line and error body along the way.
+Every request runs with an id in `c.Request.Context()` — taken from the `x-request-id` header or generated — and the response echoes it in the same header. It is shared with `grpckit` through the [`requestid`](../../requestid/README.md) package, so the id survives HTTP → use-case → gRPC hops and appears in every log line and error body along the way.
 
 ## Custom middleware & auth
 

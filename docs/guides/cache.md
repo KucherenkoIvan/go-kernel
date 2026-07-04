@@ -1,6 +1,6 @@
 # Caching
 
-The caching port and its two stores. The kernel side lives in [`cache`](../../cache/).
+The caching port and its two stores. The kernel side lives in [`cache`](../../cache/README.md).
 
 | Store | Backed by | Use for |
 |---|---|---|

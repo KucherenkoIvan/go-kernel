@@ -189,3 +189,7 @@ func (p *CouponUsedNotificationPolicy) Handle(ctx context.Context, event domain.
 	})
 }
 ```
+
+---
+
+Next: [Infrastructure Layer →](./4-infrastructure-layer.md)

@@ -1,0 +1,21 @@
+# binaries & build artifacts
+/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# local environment (never commit real credentials)
+.env
+.env.local
+
+# local databases (sqlite deployments/tests)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# editors & OS
+.DS_Store
+.idea/
+.vscode/

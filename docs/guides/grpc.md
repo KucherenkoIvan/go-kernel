@@ -1,6 +1,6 @@
 # gRPC
 
-Synchronous communication between services. Contract-first: protos live in [`contracts/`](../../contracts/), generated code is committed and imported from the module. The runtime side lives in [`grpckit`](../../grpckit/).
+Synchronous communication between services. Contract-first: protos live in [`contracts/`](../../contracts/README.md), generated code is committed and imported from the module. The runtime side lives in [`grpckit`](../../grpckit/README.md).
 
 ## Contracts workflow
 
@@ -107,7 +107,7 @@ See the [middleware & auth guide](./middleware-auth.md) for the full pattern (Pr
 
 ## Request-id propagation
 
-Every handler runs with a request id in context (`grpckit.RequestID(ctx)`) — taken from incoming `x-request-id` metadata or generated. The client interceptor forwards it on outgoing calls, so the id survives service hops — including HTTP→gRPC, since the id lives in the shared [`requestid`](../../requestid/) package used by `httpapi` as well. Seed it at the edge with `grpckit.WithRequestID(ctx, id)`.
+Every handler runs with a request id in context (`grpckit.RequestID(ctx)`) — taken from incoming `x-request-id` metadata or generated. The client interceptor forwards it on outgoing calls, so the id survives service hops — including HTTP→gRPC, since the id lives in the shared [`requestid`](../../requestid/README.md) package used by `httpapi` as well. Seed it at the edge with `grpckit.WithRequestID(ctx, id)`.
 
 ## Testing
 

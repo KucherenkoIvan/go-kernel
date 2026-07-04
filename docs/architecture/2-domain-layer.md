@@ -6,7 +6,7 @@ Pure business logic with no dependencies on frameworks or infrastructure. Import
 
 | Package | Why |
 |-------|-------|
-| `github.com/KucherenkoIvan/go-kernel/ddd` | Base building blocks: `EventRecorder`, `NewEvent`, `Clock`, etc. *(package to be published from this module)* |
+| `github.com/KucherenkoIvan/go-kernel/ddd` | Base building blocks: `EventRecorder`, `NewEvent`, `Clock`, etc. — see the [ddd guide](../guides/ddd.md) |
 | `time` (stdlib) | Working with dates/time. `time.Time` is immutable by design. Never call `time.Now()` in domain — accept time as an argument or use the `Clock` port for testability |
 
 ```
@@ -328,3 +328,7 @@ func (c *Coupon) Use() error { ... }
 | `time.Now()` in domain | Accept time as an argument; `Clock` port for testability |
 | A repository for a child entity | Repositories work only with aggregates; an entity is persisted as part of its aggregate |
 | `panic` for business situations | Domain errors are returned values; `panic` only for impossible states (bugs) |
+
+---
+
+Next: [Application Layer →](./3-application-layer.md)

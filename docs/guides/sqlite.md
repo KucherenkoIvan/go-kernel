@@ -1,6 +1,6 @@
 # SQLite (single-binary deployments)
 
-The embedded-database client for the smallest deployments. The kernel side lives in [`sqlite`](../../sqlite/) — the [postgres client's](./postgres.md) twin on [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite).
+The embedded-database client for the smallest deployments. The kernel side lives in [`sqlite`](../../sqlite/README.md) — the [postgres client's](./postgres.md) twin on [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite).
 
 ## Why (and when)
 

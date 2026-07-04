@@ -23,7 +23,7 @@ Relay (one adapter in the same or a dedicated service)
 
 Delivery is **at-least-once** (a crash between publish and delete republishes the batch) — consumers are idempotent anyway (see [kafka.md](./kafka.md)). Ordering: `id` is UUIDv7, so `ORDER BY id` is creation order.
 
-The kernel side lives in [`outbox`](../../outbox/).
+The kernel side lives in [`outbox`](../../outbox/README.md).
 
 ## 1. Producer side: Enqueue
 

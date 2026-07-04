@@ -216,3 +216,7 @@ So that business logic is not tied to infrastructure, there are also restriction
 - `shared/domain/` — domain types reused across features within the service (VOs, events). Accessible from domain and above
 - `shared/ports/` — abstractions for communication between features. Accessible from application and above.
 - `shared/infra/` — infrastructure packages (db, config, auth, health). Accessible **only** from adapters and cmd.
+
+---
+
+Next: [Domain Layer →](./2-domain-layer.md)

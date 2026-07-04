@@ -22,7 +22,7 @@ This keeps use-cases transport-agnostic and trivially testable — no context fi
 
 ## The Principal
 
-The [`auth`](../../auth/) package standardizes *where identity lives*, nothing more:
+The [`auth`](../../auth/README.md) package standardizes *where identity lives*, nothing more:
 
 ```go
 type Principal struct {

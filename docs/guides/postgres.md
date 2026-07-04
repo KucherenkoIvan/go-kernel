@@ -1,6 +1,6 @@
 # PostgreSQL & Transactions
 
-How services connect to PostgreSQL, run transactions, and structure repositories. The kernel side lives in [`postgres`](../../postgres/); everything service-specific lives in the service's `internal/shared/infra/postgres/`.
+How services connect to PostgreSQL, run transactions, and structure repositories. The kernel side lives in [`postgres`](../../postgres/README.md); everything service-specific lives in the service's `internal/shared/infra/postgres/`.
 
 ## Layout
 
