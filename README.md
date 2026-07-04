@@ -29,7 +29,9 @@ import "github.com/KucherenkoIvan/go-kernel/ddd"
 - [`config`](config/) — typed env config with `.env`/`.env.local` support, defaults, required-field validation. Zero dependencies.
 - [`observability`](observability/) — `NewLogger` (slog, env-configured); metrics/tracing land here later.
 - [`health`](health/) — self-diagnosing checks: detailed `/healthz`, dumb `/livez`, aggregate gRPC health service.
-- [`events`](events/) — commit-gated in-process event delivery (`ChannelPublisher`) for policies/projectors; outbox comes next behind the same port. See the [events guide](docs/guides/events.md).
+- [`events`](events/) — commit-gated in-process event delivery (`ChannelPublisher`) for policies/projectors. See the [events guide](docs/guides/events.md).
+- [`kafka`](kafka/) — contract-first Kafka on franz-go: `Contract[T]` (protobuf), typed `Send`/`Subscribe`, at-least-once consumer with retry-on-error, request-id through headers. See the [Kafka guide](docs/guides/kafka.md).
+- [`outbox`](outbox/) — transactional outbox: `Enqueue` atomic with the business tx, relay worker (serialized/parallel modes), `PendingStats` for alerting. See the [outbox guide](docs/guides/outbox.md).
 - [`grpckit/grpckittest`](grpckit/grpckittest/) — in-memory gRPC round-trips for tests (`Serve`).
 
 ### Installing from a private repo

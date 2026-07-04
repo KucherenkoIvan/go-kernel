@@ -1,0 +1,13 @@
+// Example event contract — the template for real Kafka events.
+//
+// Layout convention: proto/events/<domain>/<version>/<file>.proto.
+// Event messages are facts, named in past tense.
+syntax = "proto3";
+
+package events.example.v1;
+
+message OrderPlacedEvent {
+  string order_id = 1;
+  string user_id = 2;
+  int64 total_cents = 3;
+}

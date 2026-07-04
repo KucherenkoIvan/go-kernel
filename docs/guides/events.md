@@ -11,10 +11,10 @@ aggregate methods          use-case (command)                     delivery
 
 The use-case publishes through its feature's **event producer port** (see the [application layer](../architecture/3-application-layer.md)); the adapter behind that port decides the delivery mechanism:
 
-| Implementation | Scope | Guarantee | Status |
+| Implementation | Scope | Guarantee | Docs |
 |---|---|---|---|
-| `events.ChannelPublisher` | same service | at-most-once, in-memory | available |
-| Transactional outbox → Kafka | cross-service, durable | at-least-once | next step |
+| `events.ChannelPublisher` | same service | at-most-once, in-memory | this guide |
+| Transactional outbox → Kafka | cross-service, durable | at-least-once | [outbox](./outbox.md), [kafka](./kafka.md) |
 
 Both sit behind the same port shape, so moving a feature from one to the other is a composition-root change — use-cases never know the difference.
 
