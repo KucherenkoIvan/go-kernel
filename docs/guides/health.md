@@ -15,9 +15,10 @@ They are deliberately separate: if the **liveness** probe ran the deep checks, a
 
 ```go
 checker := health.NewChecker(
-	health.Check{Name: "postgres", Check: db.Ping},       // postgres.Client
-	health.Check{Name: "kafka",    Check: producer.Ping}, // kafka.Producer
-	health.Check{Name: "redis",    Check: store.Ping},    // cache.Redis
+	health.Check{Name: "postgres",       Check: db.Ping},       // postgres.Client
+	health.Check{Name: "kafka-producer", Check: producer.Ping}, // kafka.Producer
+	health.Check{Name: "kafka-consumer", Check: consumer.Ping}, // kafka.Consumer
+	health.Check{Name: "redis",          Check: store.Ping},    // cache.Redis
 )
 
 r.GET("/livez", gin.WrapH(health.Liveness()))
@@ -25,9 +26,9 @@ r.GET("/healthz", gin.WrapH(checker.Handler()))
 checker.RegisterGRPC(srv) // standard gRPC health service — aggregate only
 ```
 
-**Every kernel client exposes a compatible `Ping`** (`postgres`, `sqlite`, `kafka.Producer`, `cache.Redis`) — registering them is one line each, and forgetting one is a silent blind spot. Custom dependencies fit the same shape: `health.Check{Name: "s3", Check: func(ctx context.Context) error { ... }}`.
+**Every kernel client exposes a compatible `Ping`** (`postgres`, `sqlite`, `kafka.Producer`, `kafka.Consumer`, `cache.Redis`) — registering them is one line each, and forgetting one is a silent blind spot. Custom dependencies fit the same shape: `health.Check{Name: "s3", Check: func(ctx context.Context) error { ... }}`.
 
-Run-adapters (consumers, relays) need no check: if they die, `app.Run` shuts the service down, which the orchestrator sees directly.
+A Run-adapter that *crashes* needs no check — `app.Run` shuts the service down, which the orchestrator sees. But a Run-adapter that *degrades without dying* does: the Kafka consumer deliberately survives broker outages (fetch errors are logged, not fatal), so only its `Ping` reveals "running but consuming nothing".
 
 ## The report
 

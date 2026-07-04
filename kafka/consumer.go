@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -45,6 +46,9 @@ type ConsumerConfig struct {
 type Consumer struct {
 	cfg      ConsumerConfig
 	handlers map[string]func(ctx context.Context, m Meta, payload []byte) error
+
+	mu     sync.RWMutex
+	client *kgo.Client // set by Run; nil before start and after stop
 }
 
 func NewConsumer(cfg ConsumerConfig) *Consumer {
@@ -80,6 +84,23 @@ func Subscribe[T proto.Message](c *Consumer, contract Contract[T], handle func(c
 	}
 }
 
+// Ping verifies the consumer's own broker connectivity — for health checks.
+// It fails until Run has started (and after it has stopped), so a registered
+// check also catches a consumer that never came up.
+//
+// This check exists because the poll loop deliberately survives broker
+// outages (fetch errors are logged, not fatal) — without it, a consumer that
+// lost its broker would sit consuming nothing while /healthz stays green.
+func (c *Consumer) Ping(ctx context.Context) error {
+	c.mu.RLock()
+	client := c.client
+	c.mu.RUnlock()
+	if client == nil {
+		return fmt.Errorf("kafka: consumer %q is not running", c.cfg.GroupID)
+	}
+	return client.Ping(ctx)
+}
+
 // retryBackoff returns the delay before the attempt-th retry (1-based),
 // capped at 30s.
 func retryBackoff(attempt int) time.Duration {
@@ -113,7 +134,15 @@ func (c *Consumer) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("kafka: creating consumer: %w", err)
 	}
-	defer client.Close()
+	c.mu.Lock()
+	c.client = client
+	c.mu.Unlock()
+	defer func() {
+		c.mu.Lock()
+		c.client = nil
+		c.mu.Unlock()
+		client.Close()
+	}()
 
 	for {
 		fetches := client.PollFetches(ctx)

@@ -94,6 +94,10 @@ func TestProduceConsume_RoundTrip(t *testing.T) {
 		rec.ids = append(rec.ids, requestid.From(ctx))
 		return nil
 	})
+
+	if err := consumer.Ping(context.Background()); err == nil {
+		t.Fatal("Ping must fail before Run starts the consumer")
+	}
 	runConsumer(t, consumer)
 
 	ctx := requestid.With(context.Background(), "req-kafka-42")
@@ -105,6 +109,11 @@ func TestProduceConsume_RoundTrip(t *testing.T) {
 	}
 
 	rec.wait(t, 1, 30*time.Second)
+
+	if err := consumer.Ping(context.Background()); err != nil {
+		t.Fatalf("Ping on a running consumer: %v", err)
+	}
+
 	rec.mu.Lock()
 	defer rec.mu.Unlock()
 	if rec.msgs[0].GetOrderId() != "o-1" || rec.msgs[0].GetTotalCents() != 4200 {

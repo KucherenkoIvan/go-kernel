@@ -82,14 +82,15 @@ err = kafka.Send(ctx, producer, kafkacontracts.ExampleOrderPlaced,
 
 ## Health check & lifecycle
 
-The producer registers on the service's checker like every dependency (see [service runtime](./service-runtime.md)), and closes through the app runner so buffered messages flush on shutdown:
+Both sides register on the service's checker (see [service runtime](./service-runtime.md)); the producer also closes through the app runner so buffered messages flush on shutdown:
 
 ```go
-health.Check{Name: "kafka", Check: producer.Ping}
+health.Check{Name: "kafka-producer", Check: producer.Ping}
+health.Check{Name: "kafka-consumer", Check: consumer.Ping}
 app.Adapter{Name: "kafka-producer", Close: producer.Close}
 ```
 
-The consumer needs no check of its own — it is a `Run` adapter; if it dies, `app.Run` shuts the service down, which the orchestrator sees directly.
+The consumer check matters more than it looks: the poll loop deliberately **survives** broker outages (fetch errors are logged, not fatal — transient blips must not crash the service), so a consumer that lost its broker keeps "running" while consuming nothing. `consumer.Ping` is what turns that state red — and it also fails before `Run` has started, catching a consumer that never came up.
 
 ## Request-id propagation
 

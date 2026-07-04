@@ -4,7 +4,7 @@ Contract-first Kafka messaging on franz-go (pure Go, no librdkafka/cgo). A contr
 
 - `Contract[T]` / `NewContract` — topic ↔ protobuf type pairing; `Encode`/`Decode`
 - `Producer` — `Send` (typed) / `SendRaw` (used by the outbox relay), `Ping` for health, flushing `Close`
-- `Consumer` + `Subscribe` — consumer group with per-contract handlers; at-least-once: offset commits only on handler success, errors retry the same message with backoff, undecodable payloads are logged and skipped
+- `Consumer` + `Subscribe` — consumer group with per-contract handlers; at-least-once: offset commits only on handler success, errors retry the same message with backoff, undecodable payloads are logged and skipped; `Ping` for health (the poll loop survives broker outages by design — only the check reveals "running but consuming nothing")
 - Request-id propagation through message headers, both directions
 
 ```go
