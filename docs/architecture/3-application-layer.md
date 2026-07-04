@@ -163,6 +163,8 @@ func (p *CouponLogsProjector) Handle(ctx context.Context, events []domain.Coupon
 
 **Important:** a projector works only with read-models. If you need reactive logic where an event triggers another command — use a policy.
 
+> How events actually reach policies and projectors (in-process channel publisher now, transactional outbox later) is the adapter's concern — see the [events guide](../guides/events.md).
+
 
 ### Policy
 

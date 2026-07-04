@@ -30,3 +30,25 @@ var NoTransaction Transaction = noTx{}
 type TxManager interface {
 	WithinTx(ctx context.Context, fn func(tx Transaction) error) error
 }
+
+// AfterCommitter is implemented by Transaction tokens that support
+// post-commit callbacks (the postgres token and the dddtest fake do).
+type AfterCommitter interface {
+	AfterCommit(fn func(ctx context.Context))
+}
+
+// AfterCommit schedules fn to run after the transaction commits
+// successfully; if the transaction rolls back, fn never runs. With
+// NoTransaction (or any token without hook support) fn runs immediately.
+//
+// This is what makes in-process event dispatch safe: events buffered on the
+// transaction are delivered only for state that actually exists — no ghost
+// events from rolled-back transactions, no handlers reading uncommitted
+// state.
+func AfterCommit(ctx context.Context, tx Transaction, fn func(ctx context.Context)) {
+	if h, ok := tx.(AfterCommitter); ok {
+		h.AfterCommit(fn)
+		return
+	}
+	fn(ctx)
+}

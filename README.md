@@ -25,6 +25,12 @@ import "github.com/KucherenkoIvan/go-kernel/ddd"
 - [`contracts`](contracts/) — contract-first protos (buf) with committed generated code under `contracts/gen/`.
 - [`auth`](auth/) — transport-agnostic `Principal` + context helpers; verification stays per-project. See the [middleware & auth guide](docs/guides/middleware-auth.md).
 - [`requestid`](requestid/) — the shared request-id context, so ids survive HTTP → gRPC hops.
+- [`app`](app/) — service lifecycle: adapters run concurrently, shutdown on signal or first failure, reverse-order cleanup. See the [service runtime guide](docs/guides/service-runtime.md).
+- [`config`](config/) — typed env config with `.env`/`.env.local` support, defaults, required-field validation. Zero dependencies.
+- [`observability`](observability/) — `NewLogger` (slog, env-configured); metrics/tracing land here later.
+- [`health`](health/) — self-diagnosing checks: detailed `/healthz`, dumb `/livez`, aggregate gRPC health service.
+- [`events`](events/) — commit-gated in-process event delivery (`ChannelPublisher`) for policies/projectors; outbox comes next behind the same port. See the [events guide](docs/guides/events.md).
+- [`grpckit/grpckittest`](grpckit/grpckittest/) — in-memory gRPC round-trips for tests (`Serve`).
 
 ### Installing from a private repo
 

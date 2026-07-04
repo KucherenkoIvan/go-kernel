@@ -5,19 +5,18 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"net"
 	"testing"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/KucherenkoIvan/go-kernel/auth"
 	examplev1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/example/v1"
 	"github.com/KucherenkoIvan/go-kernel/ddd"
 	"github.com/KucherenkoIvan/go-kernel/grpckit"
+	"github.com/KucherenkoIvan/go-kernel/grpckit/grpckittest"
 )
 
 type bannedError struct{ ddd.DomainError }
@@ -56,24 +55,12 @@ func (s *principalEchoServer) Echo(ctx context.Context, _ *examplev1.EchoRequest
 func setupWithAuth(t *testing.T) examplev1.EchoServiceClient {
 	t.Helper()
 
-	lis := bufconn.Listen(1 << 20)
 	srv := grpckit.NewServer(
 		grpckit.WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
 		grpckit.WithUnaryInterceptor(authInterceptor()),
 	)
 	examplev1.RegisterEchoServiceServer(srv, &principalEchoServer{})
-	go srv.Serve(lis) //nolint:errcheck
-	t.Cleanup(srv.Stop)
-
-	conn, err := grpckit.Connect("passthrough:///bufnet",
-		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
-			return lis.DialContext(ctx)
-		}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = conn.Close() })
-	return examplev1.NewEchoServiceClient(conn)
+	return examplev1.NewEchoServiceClient(grpckittest.Serve(t, srv))
 }
 
 func call(client examplev1.EchoServiceClient, token string) (*examplev1.EchoResponse, error) {

@@ -29,10 +29,17 @@ var (
 
 // pgTx is the ddd.Transaction token carrying the native pgx transaction.
 type pgTx struct {
-	tx pgx.Tx
+	tx          pgx.Tx
+	afterCommit []func(ctx context.Context)
 }
 
 func (*pgTx) DDDTransaction() {}
+
+// AfterCommit implements ddd.AfterCommitter: fn runs only after a successful
+// commit, and is dropped on rollback.
+func (t *pgTx) AfterCommit(fn func(ctx context.Context)) {
+	t.afterCommit = append(t.afterCommit, fn)
+}
 
 // WithinTx implements ddd.TxManager. Everything inside fn runs in one DB
 // transaction; if fn returns an error, the transaction is rolled back.
@@ -46,12 +53,16 @@ func (c *Client) WithinTx(ctx context.Context, fn func(tx ddd.Transaction) error
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op after commit
 
-	if err := fn(&pgTx{tx: tx}); err != nil {
+	token := &pgTx{tx: tx}
+	if err := fn(token); err != nil {
 		return err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("postgres: commit tx: %w", err)
+	}
+	for _, fn := range token.afterCommit {
+		fn(ctx)
 	}
 	return nil
 }

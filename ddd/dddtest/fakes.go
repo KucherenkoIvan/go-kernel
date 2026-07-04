@@ -12,9 +12,18 @@ import (
 // FakeTx is the Transaction token produced by FakeTxManager.
 type FakeTx struct {
 	Seq int
+
+	afterCommit []func(ctx context.Context)
 }
 
 func (*FakeTx) DDDTransaction() {}
+
+// AfterCommit implements ddd.AfterCommitter with the same semantics as the
+// postgres token: callbacks run only when the callback given to WithinTx
+// returns nil, and are dropped on error ("rollback").
+func (t *FakeTx) AfterCommit(fn func(ctx context.Context)) {
+	t.afterCommit = append(t.afterCommit, fn)
+}
 
 // FakeTxManager does not create real transactions — it just invokes the
 // callback and records the token, so tests can assert that a repository was
@@ -31,11 +40,17 @@ type FakeTxManager struct {
 	LastTransaction ddd.Transaction
 }
 
-func (m *FakeTxManager) WithinTx(_ context.Context, fn func(tx ddd.Transaction) error) error {
+func (m *FakeTxManager) WithinTx(ctx context.Context, fn func(tx ddd.Transaction) error) error {
 	m.Calls++
 	tx := &FakeTx{Seq: m.Calls}
 	m.LastTransaction = tx
-	return fn(tx)
+	if err := fn(tx); err != nil {
+		return err
+	}
+	for _, hook := range tx.afterCommit {
+		hook(ctx)
+	}
+	return nil
 }
 
 // FixedClock always returns Time.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"testing/fstest"
 
 	"github.com/KucherenkoIvan/go-kernel/ddd"
 )
@@ -98,5 +99,66 @@ func TestWithinTx_CommitAndRollback(t *testing.T) {
 	}
 	if n := count(); n != 1 {
 		t.Fatalf("after rollback: count = %d, want 1 (insert must be rolled back)", n)
+	}
+}
+
+func TestWithinTx_AfterCommitHooks(t *testing.T) {
+	c := integrationClient(t)
+	ctx := context.Background()
+
+	ran := false
+	err := c.WithinTx(ctx, func(tx ddd.Transaction) error {
+		ddd.AfterCommit(ctx, tx, func(context.Context) { ran = true })
+		if ran {
+			t.Fatal("hook must not run before commit")
+		}
+		return nil
+	})
+	if err != nil || !ran {
+		t.Fatalf("hook must run after commit: err=%v ran=%v", err, ran)
+	}
+
+	ran = false
+	_ = c.WithinTx(ctx, func(tx ddd.Transaction) error {
+		ddd.AfterCommit(ctx, tx, func(context.Context) { ran = true })
+		return errors.New("rollback")
+	})
+	if ran {
+		t.Fatal("hook must not run after rollback")
+	}
+}
+
+func TestMigrate(t *testing.T) {
+	c := integrationClient(t)
+	ctx := context.Background()
+
+	t.Cleanup(func() {
+		_, _ = c.Resolve(ddd.NoTransaction).Exec(ctx,
+			`DROP TABLE IF EXISTS go_kernel_migrate_test; DELETE FROM schema_migrations WHERE version LIKE '00%_test_%.sql'`)
+	})
+
+	fsys := fstest.MapFS{
+		"0001_test_create.sql": &fstest.MapFile{Data: []byte(
+			`CREATE TABLE go_kernel_migrate_test (id int PRIMARY KEY);
+			 CREATE INDEX go_kernel_migrate_test_idx ON go_kernel_migrate_test (id);`)},
+		"0002_test_seed.sql": &fstest.MapFile{Data: []byte(
+			`INSERT INTO go_kernel_migrate_test (id) VALUES (1)`)},
+	}
+
+	if err := c.Migrate(ctx, fsys); err != nil {
+		t.Fatal(err)
+	}
+	// idempotent: second run applies nothing
+	if err := c.Migrate(ctx, fsys); err != nil {
+		t.Fatal(err)
+	}
+
+	var n int
+	if err := c.Resolve(ddd.NoTransaction).QueryRow(ctx,
+		`SELECT count(*) FROM go_kernel_migrate_test`).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Fatalf("seed applied %d times, want 1", n)
 	}
 }

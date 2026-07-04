@@ -5,17 +5,15 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"net"
 	"testing"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 
 	examplev1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/example/v1"
 	"github.com/KucherenkoIvan/go-kernel/ddd"
 	"github.com/KucherenkoIvan/go-kernel/grpckit"
+	"github.com/KucherenkoIvan/go-kernel/grpckit/grpckittest"
 )
 
 type echoForbiddenError struct{ ddd.DomainError }
@@ -43,26 +41,14 @@ func (s *echoServer) Echo(ctx context.Context, req *examplev1.EchoRequest) (*exa
 func setup(t *testing.T) (examplev1.EchoServiceClient, *echoServer) {
 	t.Helper()
 
-	lis := bufconn.Listen(1 << 20)
 	impl := &echoServer{}
-
 	srv := grpckit.NewServer(
 		grpckit.WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
 		grpckit.WithErrorCode("echo_forbidden", codes.PermissionDenied),
 	)
 	examplev1.RegisterEchoServiceServer(srv, impl)
-	go srv.Serve(lis) //nolint:errcheck
-	t.Cleanup(srv.Stop)
 
-	conn, err := grpckit.Connect("passthrough:///bufnet",
-		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
-			return lis.DialContext(ctx)
-		}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = conn.Close() })
-
+	conn := grpckittest.Serve(t, srv)
 	return examplev1.NewEchoServiceClient(conn), impl
 }
 

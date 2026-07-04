@@ -138,18 +138,21 @@ func (r *CouponRepository) GetByID(ctx context.Context, tx ddd.Transaction, id d
 
 ## Migrations
 
-Plain SQL files in `internal/shared/infra/postgres/migrations/`, numbered, embedded into the binary:
+Plain SQL files in `internal/shared/infra/postgres/migrations/`, numbered, embedded into the binary and applied by the built-in runner:
 
 ```go
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
+
+sub, _ := fs.Sub(migrationsFS, "migrations")
+if err := db.Migrate(ctx, sub); err != nil { ... }
 ```
 
-The runner is a per-project choice ([goose](https://github.com/pressly/goose) is the common one and reads an `embed.FS` directly); the kernel deliberately ships none. Rules that hold regardless of runner:
+`Migrate` applies `*.sql` files in lexicographic order, once each (`schema_migrations` bookkeeping), one transaction per file, serialized across replicas with an advisory lock. Up-only by design; [goose](https://github.com/pressly/goose) remains an option if a project outgrows it. Rules that hold regardless of runner:
 
 - Migrations are the schema source of truth — no schema mutation from application code.
 - A migration that adds a column adds its indexes in the same file.
-- Down migrations are optional for personal projects; if you write them, test them.
+- Down migrations are a non-goal — roll forward.
 
 ## Testing
 
