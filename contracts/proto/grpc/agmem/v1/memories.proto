@@ -1,0 +1,109 @@
+// agmem hosted-mode contract: the memories.Service facade over gRPC.
+//
+// Auth rides gRPC metadata ("authorization: Bearer agm_..."); the API key
+// selects the memory space server-side, so no space field appears here.
+// Domain errors travel as grpckit ErrorInfo details (Reason = snake_code).
+syntax = "proto3";
+
+package grpc.agmem.v1;
+
+import "google/protobuf/timestamp.proto";
+
+service MemoryService {
+  rpc Store(StoreRequest) returns (StoreResponse);
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc Rate(RateRequest) returns (RateResponse);
+  rpc Recall(RecallRequest) returns (RecallResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
+
+message StoreRequest {
+  string content = 1;
+  string summary = 2;
+  string kind = 3;
+  repeated string keywords = 4;
+  // Advisory only: the server overwrites source with the API key's name.
+  string source = 5;
+  int32 ttl_hours = 6;
+  string supersedes = 7;
+}
+
+message StoreResponse {
+  string id = 1;
+}
+
+message SearchRequest {
+  string query = 1;
+  repeated string keywords = 2;      // all must match
+  repeated string keywords_any = 3;  // at least one matches; each boosts rank
+  string kind = 4;
+  google.protobuf.Timestamp since = 5;  // absent = no lower bound
+  google.protobuf.Timestamp until = 6;  // absent = no upper bound
+  int32 limit = 7;
+  bool include_dead = 8;  // include superseded and expired
+}
+
+message SearchResponse {
+  repeated SearchResult results = 1;
+}
+
+message SearchResult {
+  string id = 1;
+  string summary = 2;
+  string kind = 3;
+  repeated string keywords = 4;
+  string source = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp expires_at = 7;  // absent = never
+  string snippet = 8;
+  double score = 9;
+  int32 votes_up = 10;
+  int32 votes_down = 11;
+  int32 access_count = 12;
+}
+
+message GetRequest {
+  string id = 1;
+}
+
+message GetResponse {
+  Memory memory = 1;
+}
+
+message Memory {
+  string id = 1;
+  string content = 2;
+  string summary = 3;
+  string kind = 4;
+  repeated string keywords = 5;
+  string source = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp expires_at = 8;  // absent = never
+  string superseded_by = 9;                  // empty = live
+  int32 votes_up = 10;
+  int32 votes_down = 11;
+  int32 access_count = 12;
+}
+
+message RateRequest {
+  string id = 1;
+  bool up = 2;
+}
+
+message RateResponse {}
+
+message RecallRequest {
+  repeated string keywords = 1;  // any may match; more matches rank higher
+  int32 budget_chars = 2;
+}
+
+message RecallResponse {
+  string context = 1;
+}
+
+message DeleteRequest {
+  string id = 1;
+}
+
+message DeleteResponse {}
