@@ -116,10 +116,10 @@ func (r *Redis) TTL(ctx context.Context, key string) (time.Duration, bool, error
 		return 0, false, fmt.Errorf("cache: redis pttl: %w", err)
 	}
 	// go-redis passes PTTL's sentinels through as raw -2/-1 (not scaled to ms)
-	switch {
-	case ttl == -2: // redis: key does not exist
+	switch ttl {
+	case -2: // redis: key does not exist
 		return 0, false, nil
-	case ttl == -1: // redis: no expiry
+	case -1: // redis: no expiry
 		return 0, true, nil
 	default:
 		return ttl, true, nil

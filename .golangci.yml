@@ -1,0 +1,31 @@
+version: "2"
+
+linters:
+  # standard set: errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - misspell
+    - depguard
+  settings:
+    depguard:
+      rules:
+        # the ddd package is the one thing domain code imports — it stays
+        # zero-dependency forever (stdlib + itself only)
+        ddd-zero-dependencies:
+          list-mode: strict
+          files:
+            - "**/ddd/**"
+          allow:
+            - $gostd
+            - github.com/KucherenkoIvan/go-kernel/ddd
+  exclusions:
+    generated: lax
+    paths:
+      - contracts/gen
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      - contracts/gen

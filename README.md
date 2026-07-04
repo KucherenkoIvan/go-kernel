@@ -67,6 +67,20 @@ git config --global url."git@github.com:".insteadOf "https://github.com/"
 
 Then a regular `go get github.com/KucherenkoIvan/go-kernel@latest` works over SSH. Versioning: `v0.x` feature-slice tags; the API may still move between minors.
 
+## Development
+
+No CI by choice — verification is local and encoded in the [Makefile](Makefile):
+
+```sh
+make tools        # one-time: buf, protoc plugins, golangci-lint
+make test         # unit tests (integration tests self-skip)
+make lint         # gofmt + go vet + golangci-lint (.golangci.yml)
+make proto        # regenerate contracts
+make integration  # full suite against real postgres/redpanda/redis in docker
+```
+
+The linter also guards one architectural invariant: the `ddd` package must stay zero-dependency (depguard rule).
+
 ## License
 
 [0BSD](LICENSE) — do whatever you want with it, no conditions, no attribution required; provided as-is with no warranty or liability.
