@@ -1,10 +1,10 @@
 // Example contract — the template for real services.
 //
-// Layout convention: proto/<domain>/<version>/<service>.proto, one directory
-// per bounded context, versioned from day one.
+// Layout convention: proto/grpc/<domain>/<version>/<service>.proto, one
+// directory per bounded context, versioned from day one.
 syntax = "proto3";
 
-package example.v1;
+package grpc.example.v1;
 
 service EchoService {
   rpc Echo(EchoRequest) returns (EchoResponse);

@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/KucherenkoIvan/go-kernel/auth"
-	examplev1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/example/v1"
+	examplev1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/grpc/example/v1"
 	"github.com/KucherenkoIvan/go-kernel/ddd"
 	"github.com/KucherenkoIvan/go-kernel/grpckit"
 	"github.com/KucherenkoIvan/go-kernel/grpckit/grpckittest"

@@ -1,0 +1,58 @@
+// The go-tinycore-template's placeholder contract. It lives in the kernel so
+// the template compiles out of the box; real projects define their own
+// contracts (here for shared ones, or locally) and rename everything
+// ChangeMe along with the feature.
+syntax = "proto3";
+
+package grpc.changeme.v1;
+
+import "google/protobuf/timestamp.proto";
+
+service ChangeMeService {
+  rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc List(ListRequest) returns (ListResponse);
+}
+
+message ChangeMe {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message CreateRequest {
+  string name = 1;
+}
+
+message CreateResponse {
+  string id = 1;
+}
+
+message UpdateRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message UpdateResponse {}
+
+message DeleteRequest {
+  string id = 1;
+}
+
+message DeleteResponse {}
+
+message GetRequest {
+  string id = 1;
+}
+
+message GetResponse {
+  ChangeMe item = 1;
+}
+
+message ListRequest {}
+
+message ListResponse {
+  repeated ChangeMe items = 1;
+}

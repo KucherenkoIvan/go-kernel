@@ -4,14 +4,14 @@ Synchronous communication between services. Contract-first: protos live in [`con
 
 ## Contracts workflow
 
-1. Add/edit a proto under `contracts/proto/<domain>/v1/`.
+1. Add/edit a proto under `contracts/proto/grpc/<domain>/v1/` (Kafka event schemas go to `proto/events/` — see [kafka.md](./kafka.md)).
 2. `buf lint && buf generate` (see [contracts/README.md](../../contracts/README.md) for one-time tooling setup).
 3. Commit `proto/` and `gen/` together.
 
 Consumers never run codegen — they import the generated package:
 
 ```go
-import couponsv1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/coupons/v1"
+import couponsv1 "github.com/KucherenkoIvan/go-kernel/contracts/gen/grpc/coupons/v1"
 ```
 
 ## Server side
