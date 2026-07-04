@@ -19,6 +19,7 @@ import "github.com/KucherenkoIvan/go-kernel/ddd"
 
 - [`ddd`](ddd/) — base building blocks the docs reference: `Event[T]` + `EventRecorder[E]`, `TxManager` / `Transaction` / `NoTransaction`, `Clock`, `IDGenerator`, `NewEntityID` (UUIDv7), `DomainError` marker. Zero dependencies.
 - [`ddd/dddtest`](ddd/dddtest/) — test fakes for the ports: `FakeTxManager`, `FixedClock`, `SequenceIDGenerator`.
+- [`postgres`](postgres/) — pgx v5 pool implementing `ddd.TxManager`: `Connect` / `MustConnect`, transaction token + `Resolve(tx)` returning a `Querier` (shaped to fit both scany and sqlc). See the [PostgreSQL guide](docs/guides/postgres.md).
 
 ### Installing from a private repo
 

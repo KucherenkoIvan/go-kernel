@@ -179,7 +179,8 @@ internal/
       config/
         config.go              # configuration loading and validation
       postgres/
-        client.go              # DB client + TxManager implementation
+        postgres.go            # DB client + TxManager wiring
+        migrations/            # schema source of truth (never in the repo root)
       health/
         health.go              # health-check endpoint for k8s
       auth/
