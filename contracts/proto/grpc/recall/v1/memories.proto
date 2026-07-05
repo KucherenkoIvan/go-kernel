@@ -96,6 +96,7 @@ message RateResponse {}
 message RecallRequest {
   repeated string keywords = 1;  // any may match; more matches rank higher
   int32 budget_chars = 2;
+  string text = 3;  // optional full-text query layered on the keyword results
 }
 
 message RecallResponse {

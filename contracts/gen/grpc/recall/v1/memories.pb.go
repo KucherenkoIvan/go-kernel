@@ -753,6 +753,7 @@ type RecallRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Keywords      []string               `protobuf:"bytes,1,rep,name=keywords,proto3" json:"keywords,omitempty"` // any may match; more matches rank higher
 	BudgetChars   int32                  `protobuf:"varint,2,opt,name=budget_chars,json=budgetChars,proto3" json:"budget_chars,omitempty"`
+	Text          string                 `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"` // optional full-text query layered on the keyword results
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -799,6 +800,13 @@ func (x *RecallRequest) GetBudgetChars() int32 {
 		return x.BudgetChars
 	}
 	return 0
+}
+
+func (x *RecallRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
 }
 
 type RecallResponse struct {
@@ -995,10 +1003,11 @@ const file_grpc_recall_v1_memories_proto_rawDesc = "" +
 	"\vRateRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x0e\n" +
 	"\x02up\x18\x02 \x01(\bR\x02up\"\x0e\n" +
-	"\fRateResponse\"N\n" +
+	"\fRateResponse\"b\n" +
 	"\rRecallRequest\x12\x1a\n" +
 	"\bkeywords\x18\x01 \x03(\tR\bkeywords\x12!\n" +
-	"\fbudget_chars\x18\x02 \x01(\x05R\vbudgetChars\"*\n" +
+	"\fbudget_chars\x18\x02 \x01(\x05R\vbudgetChars\x12\x12\n" +
+	"\x04text\x18\x03 \x01(\tR\x04text\"*\n" +
 	"\x0eRecallResponse\x12\x18\n" +
 	"\acontext\x18\x01 \x01(\tR\acontext\"\x1f\n" +
 	"\rDeleteRequest\x12\x0e\n" +
