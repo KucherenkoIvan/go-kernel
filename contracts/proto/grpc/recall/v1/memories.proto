@@ -1,11 +1,11 @@
-// agmem hosted-mode contract: the memories.Service facade over gRPC.
+// recall hosted-mode contract: the memories.Service facade over gRPC.
 //
-// Auth rides gRPC metadata ("authorization: Bearer agm_..."); the API key
+// Auth rides gRPC metadata ("authorization: Bearer rcl_..."); the API key
 // selects the memory space server-side, so no space field appears here.
 // Domain errors travel as grpckit ErrorInfo details (Reason = snake_code).
 syntax = "proto3";
 
-package grpc.agmem.v1;
+package grpc.recall.v1;
 
 import "google/protobuf/timestamp.proto";
 

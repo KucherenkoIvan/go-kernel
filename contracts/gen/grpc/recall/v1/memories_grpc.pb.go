@@ -1,6 +1,6 @@
-// agmem hosted-mode contract: the memories.Service facade over gRPC.
+// recall hosted-mode contract: the memories.Service facade over gRPC.
 //
-// Auth rides gRPC metadata ("authorization: Bearer agm_..."); the API key
+// Auth rides gRPC metadata ("authorization: Bearer rcl_..."); the API key
 // selects the memory space server-side, so no space field appears here.
 // Domain errors travel as grpckit ErrorInfo details (Reason = snake_code).
 
@@ -8,9 +8,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             (unknown)
-// source: grpc/agmem/v1/memories.proto
+// source: grpc/recall/v1/memories.proto
 
-package agmemv1
+package recallv1
 
 import (
 	context "context"
@@ -25,12 +25,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MemoryService_Store_FullMethodName  = "/grpc.agmem.v1.MemoryService/Store"
-	MemoryService_Search_FullMethodName = "/grpc.agmem.v1.MemoryService/Search"
-	MemoryService_Get_FullMethodName    = "/grpc.agmem.v1.MemoryService/Get"
-	MemoryService_Rate_FullMethodName   = "/grpc.agmem.v1.MemoryService/Rate"
-	MemoryService_Recall_FullMethodName = "/grpc.agmem.v1.MemoryService/Recall"
-	MemoryService_Delete_FullMethodName = "/grpc.agmem.v1.MemoryService/Delete"
+	MemoryService_Store_FullMethodName  = "/grpc.recall.v1.MemoryService/Store"
+	MemoryService_Search_FullMethodName = "/grpc.recall.v1.MemoryService/Search"
+	MemoryService_Get_FullMethodName    = "/grpc.recall.v1.MemoryService/Get"
+	MemoryService_Rate_FullMethodName   = "/grpc.recall.v1.MemoryService/Rate"
+	MemoryService_Recall_FullMethodName = "/grpc.recall.v1.MemoryService/Recall"
+	MemoryService_Delete_FullMethodName = "/grpc.recall.v1.MemoryService/Delete"
 )
 
 // MemoryServiceClient is the client API for MemoryService service.
@@ -284,7 +284,7 @@ func _MemoryService_Delete_Handler(srv interface{}, ctx context.Context, dec fun
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MemoryService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "grpc.agmem.v1.MemoryService",
+	ServiceName: "grpc.recall.v1.MemoryService",
 	HandlerType: (*MemoryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -313,5 +313,5 @@ var MemoryService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "grpc/agmem/v1/memories.proto",
+	Metadata: "grpc/recall/v1/memories.proto",
 }

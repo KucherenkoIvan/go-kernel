@@ -1,6 +1,6 @@
-// agmem hosted-mode contract: the memories.Service facade over gRPC.
+// recall hosted-mode contract: the memories.Service facade over gRPC.
 //
-// Auth rides gRPC metadata ("authorization: Bearer agm_..."); the API key
+// Auth rides gRPC metadata ("authorization: Bearer rcl_..."); the API key
 // selects the memory space server-side, so no space field appears here.
 // Domain errors travel as grpckit ErrorInfo details (Reason = snake_code).
 
@@ -8,9 +8,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: grpc/agmem/v1/memories.proto
+// source: grpc/recall/v1/memories.proto
 
-package agmemv1
+package recallv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -44,7 +44,7 @@ type StoreRequest struct {
 
 func (x *StoreRequest) Reset() {
 	*x = StoreRequest{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[0]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -56,7 +56,7 @@ func (x *StoreRequest) String() string {
 func (*StoreRequest) ProtoMessage() {}
 
 func (x *StoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[0]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -69,7 +69,7 @@ func (x *StoreRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreRequest.ProtoReflect.Descriptor instead.
 func (*StoreRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{0}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *StoreRequest) GetContent() string {
@@ -130,7 +130,7 @@ type StoreResponse struct {
 
 func (x *StoreResponse) Reset() {
 	*x = StoreResponse{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[1]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -142,7 +142,7 @@ func (x *StoreResponse) String() string {
 func (*StoreResponse) ProtoMessage() {}
 
 func (x *StoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[1]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -155,7 +155,7 @@ func (x *StoreResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreResponse.ProtoReflect.Descriptor instead.
 func (*StoreResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{1}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *StoreResponse) GetId() string {
@@ -181,7 +181,7 @@ type SearchRequest struct {
 
 func (x *SearchRequest) Reset() {
 	*x = SearchRequest{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[2]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -193,7 +193,7 @@ func (x *SearchRequest) String() string {
 func (*SearchRequest) ProtoMessage() {}
 
 func (x *SearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[2]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -206,7 +206,7 @@ func (x *SearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
 func (*SearchRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{2}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SearchRequest) GetQuery() string {
@@ -274,7 +274,7 @@ type SearchResponse struct {
 
 func (x *SearchResponse) Reset() {
 	*x = SearchResponse{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[3]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -286,7 +286,7 @@ func (x *SearchResponse) String() string {
 func (*SearchResponse) ProtoMessage() {}
 
 func (x *SearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[3]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -299,7 +299,7 @@ func (x *SearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResponse.ProtoReflect.Descriptor instead.
 func (*SearchResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{3}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SearchResponse) GetResults() []*SearchResult {
@@ -329,7 +329,7 @@ type SearchResult struct {
 
 func (x *SearchResult) Reset() {
 	*x = SearchResult{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[4]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -341,7 +341,7 @@ func (x *SearchResult) String() string {
 func (*SearchResult) ProtoMessage() {}
 
 func (x *SearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[4]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -354,7 +354,7 @@ func (x *SearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResult.ProtoReflect.Descriptor instead.
 func (*SearchResult) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{4}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SearchResult) GetId() string {
@@ -450,7 +450,7 @@ type GetRequest struct {
 
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[5]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -462,7 +462,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[5]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -475,7 +475,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{5}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetRequest) GetId() string {
@@ -494,7 +494,7 @@ type GetResponse struct {
 
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[6]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -506,7 +506,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[6]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -519,7 +519,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{6}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetResponse) GetMemory() *Memory {
@@ -549,7 +549,7 @@ type Memory struct {
 
 func (x *Memory) Reset() {
 	*x = Memory{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[7]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +561,7 @@ func (x *Memory) String() string {
 func (*Memory) ProtoMessage() {}
 
 func (x *Memory) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[7]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +574,7 @@ func (x *Memory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Memory.ProtoReflect.Descriptor instead.
 func (*Memory) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{7}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Memory) GetId() string {
@@ -671,7 +671,7 @@ type RateRequest struct {
 
 func (x *RateRequest) Reset() {
 	*x = RateRequest{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[8]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +683,7 @@ func (x *RateRequest) String() string {
 func (*RateRequest) ProtoMessage() {}
 
 func (x *RateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[8]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +696,7 @@ func (x *RateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RateRequest.ProtoReflect.Descriptor instead.
 func (*RateRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{8}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RateRequest) GetId() string {
@@ -721,7 +721,7 @@ type RateResponse struct {
 
 func (x *RateResponse) Reset() {
 	*x = RateResponse{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[9]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -733,7 +733,7 @@ func (x *RateResponse) String() string {
 func (*RateResponse) ProtoMessage() {}
 
 func (x *RateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[9]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -746,7 +746,7 @@ func (x *RateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RateResponse.ProtoReflect.Descriptor instead.
 func (*RateResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{9}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{9}
 }
 
 type RecallRequest struct {
@@ -759,7 +759,7 @@ type RecallRequest struct {
 
 func (x *RecallRequest) Reset() {
 	*x = RecallRequest{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[10]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -771,7 +771,7 @@ func (x *RecallRequest) String() string {
 func (*RecallRequest) ProtoMessage() {}
 
 func (x *RecallRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[10]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -784,7 +784,7 @@ func (x *RecallRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecallRequest.ProtoReflect.Descriptor instead.
 func (*RecallRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{10}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RecallRequest) GetKeywords() []string {
@@ -810,7 +810,7 @@ type RecallResponse struct {
 
 func (x *RecallResponse) Reset() {
 	*x = RecallResponse{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[11]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -822,7 +822,7 @@ func (x *RecallResponse) String() string {
 func (*RecallResponse) ProtoMessage() {}
 
 func (x *RecallResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[11]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +835,7 @@ func (x *RecallResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecallResponse.ProtoReflect.Descriptor instead.
 func (*RecallResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{11}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RecallResponse) GetContext() string {
@@ -854,7 +854,7 @@ type DeleteRequest struct {
 
 func (x *DeleteRequest) Reset() {
 	*x = DeleteRequest{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[12]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -866,7 +866,7 @@ func (x *DeleteRequest) String() string {
 func (*DeleteRequest) ProtoMessage() {}
 
 func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[12]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -879,7 +879,7 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{12}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteRequest) GetId() string {
@@ -897,7 +897,7 @@ type DeleteResponse struct {
 
 func (x *DeleteResponse) Reset() {
 	*x = DeleteResponse{}
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[13]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -909,7 +909,7 @@ func (x *DeleteResponse) String() string {
 func (*DeleteResponse) ProtoMessage() {}
 
 func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_agmem_v1_memories_proto_msgTypes[13]
+	mi := &file_grpc_recall_v1_memories_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -922,14 +922,14 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_agmem_v1_memories_proto_rawDescGZIP(), []int{13}
+	return file_grpc_recall_v1_memories_proto_rawDescGZIP(), []int{13}
 }
 
-var File_grpc_agmem_v1_memories_proto protoreflect.FileDescriptor
+var File_grpc_recall_v1_memories_proto protoreflect.FileDescriptor
 
-const file_grpc_agmem_v1_memories_proto_rawDesc = "" +
+const file_grpc_recall_v1_memories_proto_rawDesc = "" +
 	"\n" +
-	"\x1cgrpc/agmem/v1/memories.proto\x12\rgrpc.agmem.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc7\x01\n" +
+	"\x1dgrpc/recall/v1/memories.proto\x12\x0egrpc.recall.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc7\x01\n" +
 	"\fStoreRequest\x12\x18\n" +
 	"\acontent\x18\x01 \x01(\tR\acontent\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12\x12\n" +
@@ -950,9 +950,9 @@ const file_grpc_agmem_v1_memories_proto_rawDesc = "" +
 	"\x05since\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x120\n" +
 	"\x05until\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x05until\x12\x14\n" +
 	"\x05limit\x18\a \x01(\x05R\x05limit\x12!\n" +
-	"\finclude_dead\x18\b \x01(\bR\vincludeDead\"G\n" +
-	"\x0eSearchResponse\x125\n" +
-	"\aresults\x18\x01 \x03(\v2\x1b.grpc.agmem.v1.SearchResultR\aresults\"\x83\x03\n" +
+	"\finclude_dead\x18\b \x01(\bR\vincludeDead\"H\n" +
+	"\x0eSearchResponse\x126\n" +
+	"\aresults\x18\x01 \x03(\v2\x1c.grpc.recall.v1.SearchResultR\aresults\"\x83\x03\n" +
 	"\fSearchResult\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12\x12\n" +
@@ -972,9 +972,9 @@ const file_grpc_agmem_v1_memories_proto_rawDesc = "" +
 	"\faccess_count\x18\f \x01(\x05R\vaccessCount\"\x1c\n" +
 	"\n" +
 	"GetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"<\n" +
-	"\vGetResponse\x12-\n" +
-	"\x06memory\x18\x01 \x01(\v2\x15.grpc.agmem.v1.MemoryR\x06memory\"\x8c\x03\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"=\n" +
+	"\vGetResponse\x12.\n" +
+	"\x06memory\x18\x01 \x01(\v2\x16.grpc.recall.v1.MemoryR\x06memory\"\x8c\x03\n" +
 	"\x06Memory\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\tR\acontent\x12\x18\n" +
@@ -1003,67 +1003,67 @@ const file_grpc_agmem_v1_memories_proto_rawDesc = "" +
 	"\acontext\x18\x01 \x01(\tR\acontext\"\x1f\n" +
 	"\rDeleteRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x10\n" +
-	"\x0eDeleteResponse2\xa7\x03\n" +
-	"\rMemoryService\x12B\n" +
-	"\x05Store\x12\x1b.grpc.agmem.v1.StoreRequest\x1a\x1c.grpc.agmem.v1.StoreResponse\x12E\n" +
-	"\x06Search\x12\x1c.grpc.agmem.v1.SearchRequest\x1a\x1d.grpc.agmem.v1.SearchResponse\x12<\n" +
-	"\x03Get\x12\x19.grpc.agmem.v1.GetRequest\x1a\x1a.grpc.agmem.v1.GetResponse\x12?\n" +
-	"\x04Rate\x12\x1a.grpc.agmem.v1.RateRequest\x1a\x1b.grpc.agmem.v1.RateResponse\x12E\n" +
-	"\x06Recall\x12\x1c.grpc.agmem.v1.RecallRequest\x1a\x1d.grpc.agmem.v1.RecallResponse\x12E\n" +
-	"\x06Delete\x12\x1c.grpc.agmem.v1.DeleteRequest\x1a\x1d.grpc.agmem.v1.DeleteResponseB\xc1\x01\n" +
-	"\x11com.grpc.agmem.v1B\rMemoriesProtoP\x01ZGgithub.com/KucherenkoIvan/go-kernel/contracts/gen/grpc/agmem/v1;agmemv1\xa2\x02\x03GAX\xaa\x02\rGrpc.Agmem.V1\xca\x02\rGrpc\\Agmem\\V1\xe2\x02\x19Grpc\\Agmem\\V1\\GPBMetadata\xea\x02\x0fGrpc::Agmem::V1b\x06proto3"
+	"\x0eDeleteResponse2\xb3\x03\n" +
+	"\rMemoryService\x12D\n" +
+	"\x05Store\x12\x1c.grpc.recall.v1.StoreRequest\x1a\x1d.grpc.recall.v1.StoreResponse\x12G\n" +
+	"\x06Search\x12\x1d.grpc.recall.v1.SearchRequest\x1a\x1e.grpc.recall.v1.SearchResponse\x12>\n" +
+	"\x03Get\x12\x1a.grpc.recall.v1.GetRequest\x1a\x1b.grpc.recall.v1.GetResponse\x12A\n" +
+	"\x04Rate\x12\x1b.grpc.recall.v1.RateRequest\x1a\x1c.grpc.recall.v1.RateResponse\x12G\n" +
+	"\x06Recall\x12\x1d.grpc.recall.v1.RecallRequest\x1a\x1e.grpc.recall.v1.RecallResponse\x12G\n" +
+	"\x06Delete\x12\x1d.grpc.recall.v1.DeleteRequest\x1a\x1e.grpc.recall.v1.DeleteResponseB\xc8\x01\n" +
+	"\x12com.grpc.recall.v1B\rMemoriesProtoP\x01ZIgithub.com/KucherenkoIvan/go-kernel/contracts/gen/grpc/recall/v1;recallv1\xa2\x02\x03GRX\xaa\x02\x0eGrpc.Recall.V1\xca\x02\x0eGrpc\\Recall\\V1\xe2\x02\x1aGrpc\\Recall\\V1\\GPBMetadata\xea\x02\x10Grpc::Recall::V1b\x06proto3"
 
 var (
-	file_grpc_agmem_v1_memories_proto_rawDescOnce sync.Once
-	file_grpc_agmem_v1_memories_proto_rawDescData []byte
+	file_grpc_recall_v1_memories_proto_rawDescOnce sync.Once
+	file_grpc_recall_v1_memories_proto_rawDescData []byte
 )
 
-func file_grpc_agmem_v1_memories_proto_rawDescGZIP() []byte {
-	file_grpc_agmem_v1_memories_proto_rawDescOnce.Do(func() {
-		file_grpc_agmem_v1_memories_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_grpc_agmem_v1_memories_proto_rawDesc), len(file_grpc_agmem_v1_memories_proto_rawDesc)))
+func file_grpc_recall_v1_memories_proto_rawDescGZIP() []byte {
+	file_grpc_recall_v1_memories_proto_rawDescOnce.Do(func() {
+		file_grpc_recall_v1_memories_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_grpc_recall_v1_memories_proto_rawDesc), len(file_grpc_recall_v1_memories_proto_rawDesc)))
 	})
-	return file_grpc_agmem_v1_memories_proto_rawDescData
+	return file_grpc_recall_v1_memories_proto_rawDescData
 }
 
-var file_grpc_agmem_v1_memories_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
-var file_grpc_agmem_v1_memories_proto_goTypes = []any{
-	(*StoreRequest)(nil),          // 0: grpc.agmem.v1.StoreRequest
-	(*StoreResponse)(nil),         // 1: grpc.agmem.v1.StoreResponse
-	(*SearchRequest)(nil),         // 2: grpc.agmem.v1.SearchRequest
-	(*SearchResponse)(nil),        // 3: grpc.agmem.v1.SearchResponse
-	(*SearchResult)(nil),          // 4: grpc.agmem.v1.SearchResult
-	(*GetRequest)(nil),            // 5: grpc.agmem.v1.GetRequest
-	(*GetResponse)(nil),           // 6: grpc.agmem.v1.GetResponse
-	(*Memory)(nil),                // 7: grpc.agmem.v1.Memory
-	(*RateRequest)(nil),           // 8: grpc.agmem.v1.RateRequest
-	(*RateResponse)(nil),          // 9: grpc.agmem.v1.RateResponse
-	(*RecallRequest)(nil),         // 10: grpc.agmem.v1.RecallRequest
-	(*RecallResponse)(nil),        // 11: grpc.agmem.v1.RecallResponse
-	(*DeleteRequest)(nil),         // 12: grpc.agmem.v1.DeleteRequest
-	(*DeleteResponse)(nil),        // 13: grpc.agmem.v1.DeleteResponse
+var file_grpc_recall_v1_memories_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_grpc_recall_v1_memories_proto_goTypes = []any{
+	(*StoreRequest)(nil),          // 0: grpc.recall.v1.StoreRequest
+	(*StoreResponse)(nil),         // 1: grpc.recall.v1.StoreResponse
+	(*SearchRequest)(nil),         // 2: grpc.recall.v1.SearchRequest
+	(*SearchResponse)(nil),        // 3: grpc.recall.v1.SearchResponse
+	(*SearchResult)(nil),          // 4: grpc.recall.v1.SearchResult
+	(*GetRequest)(nil),            // 5: grpc.recall.v1.GetRequest
+	(*GetResponse)(nil),           // 6: grpc.recall.v1.GetResponse
+	(*Memory)(nil),                // 7: grpc.recall.v1.Memory
+	(*RateRequest)(nil),           // 8: grpc.recall.v1.RateRequest
+	(*RateResponse)(nil),          // 9: grpc.recall.v1.RateResponse
+	(*RecallRequest)(nil),         // 10: grpc.recall.v1.RecallRequest
+	(*RecallResponse)(nil),        // 11: grpc.recall.v1.RecallResponse
+	(*DeleteRequest)(nil),         // 12: grpc.recall.v1.DeleteRequest
+	(*DeleteResponse)(nil),        // 13: grpc.recall.v1.DeleteResponse
 	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
 }
-var file_grpc_agmem_v1_memories_proto_depIdxs = []int32{
-	14, // 0: grpc.agmem.v1.SearchRequest.since:type_name -> google.protobuf.Timestamp
-	14, // 1: grpc.agmem.v1.SearchRequest.until:type_name -> google.protobuf.Timestamp
-	4,  // 2: grpc.agmem.v1.SearchResponse.results:type_name -> grpc.agmem.v1.SearchResult
-	14, // 3: grpc.agmem.v1.SearchResult.created_at:type_name -> google.protobuf.Timestamp
-	14, // 4: grpc.agmem.v1.SearchResult.expires_at:type_name -> google.protobuf.Timestamp
-	7,  // 5: grpc.agmem.v1.GetResponse.memory:type_name -> grpc.agmem.v1.Memory
-	14, // 6: grpc.agmem.v1.Memory.created_at:type_name -> google.protobuf.Timestamp
-	14, // 7: grpc.agmem.v1.Memory.expires_at:type_name -> google.protobuf.Timestamp
-	0,  // 8: grpc.agmem.v1.MemoryService.Store:input_type -> grpc.agmem.v1.StoreRequest
-	2,  // 9: grpc.agmem.v1.MemoryService.Search:input_type -> grpc.agmem.v1.SearchRequest
-	5,  // 10: grpc.agmem.v1.MemoryService.Get:input_type -> grpc.agmem.v1.GetRequest
-	8,  // 11: grpc.agmem.v1.MemoryService.Rate:input_type -> grpc.agmem.v1.RateRequest
-	10, // 12: grpc.agmem.v1.MemoryService.Recall:input_type -> grpc.agmem.v1.RecallRequest
-	12, // 13: grpc.agmem.v1.MemoryService.Delete:input_type -> grpc.agmem.v1.DeleteRequest
-	1,  // 14: grpc.agmem.v1.MemoryService.Store:output_type -> grpc.agmem.v1.StoreResponse
-	3,  // 15: grpc.agmem.v1.MemoryService.Search:output_type -> grpc.agmem.v1.SearchResponse
-	6,  // 16: grpc.agmem.v1.MemoryService.Get:output_type -> grpc.agmem.v1.GetResponse
-	9,  // 17: grpc.agmem.v1.MemoryService.Rate:output_type -> grpc.agmem.v1.RateResponse
-	11, // 18: grpc.agmem.v1.MemoryService.Recall:output_type -> grpc.agmem.v1.RecallResponse
-	13, // 19: grpc.agmem.v1.MemoryService.Delete:output_type -> grpc.agmem.v1.DeleteResponse
+var file_grpc_recall_v1_memories_proto_depIdxs = []int32{
+	14, // 0: grpc.recall.v1.SearchRequest.since:type_name -> google.protobuf.Timestamp
+	14, // 1: grpc.recall.v1.SearchRequest.until:type_name -> google.protobuf.Timestamp
+	4,  // 2: grpc.recall.v1.SearchResponse.results:type_name -> grpc.recall.v1.SearchResult
+	14, // 3: grpc.recall.v1.SearchResult.created_at:type_name -> google.protobuf.Timestamp
+	14, // 4: grpc.recall.v1.SearchResult.expires_at:type_name -> google.protobuf.Timestamp
+	7,  // 5: grpc.recall.v1.GetResponse.memory:type_name -> grpc.recall.v1.Memory
+	14, // 6: grpc.recall.v1.Memory.created_at:type_name -> google.protobuf.Timestamp
+	14, // 7: grpc.recall.v1.Memory.expires_at:type_name -> google.protobuf.Timestamp
+	0,  // 8: grpc.recall.v1.MemoryService.Store:input_type -> grpc.recall.v1.StoreRequest
+	2,  // 9: grpc.recall.v1.MemoryService.Search:input_type -> grpc.recall.v1.SearchRequest
+	5,  // 10: grpc.recall.v1.MemoryService.Get:input_type -> grpc.recall.v1.GetRequest
+	8,  // 11: grpc.recall.v1.MemoryService.Rate:input_type -> grpc.recall.v1.RateRequest
+	10, // 12: grpc.recall.v1.MemoryService.Recall:input_type -> grpc.recall.v1.RecallRequest
+	12, // 13: grpc.recall.v1.MemoryService.Delete:input_type -> grpc.recall.v1.DeleteRequest
+	1,  // 14: grpc.recall.v1.MemoryService.Store:output_type -> grpc.recall.v1.StoreResponse
+	3,  // 15: grpc.recall.v1.MemoryService.Search:output_type -> grpc.recall.v1.SearchResponse
+	6,  // 16: grpc.recall.v1.MemoryService.Get:output_type -> grpc.recall.v1.GetResponse
+	9,  // 17: grpc.recall.v1.MemoryService.Rate:output_type -> grpc.recall.v1.RateResponse
+	11, // 18: grpc.recall.v1.MemoryService.Recall:output_type -> grpc.recall.v1.RecallResponse
+	13, // 19: grpc.recall.v1.MemoryService.Delete:output_type -> grpc.recall.v1.DeleteResponse
 	14, // [14:20] is the sub-list for method output_type
 	8,  // [8:14] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
@@ -1071,26 +1071,26 @@ var file_grpc_agmem_v1_memories_proto_depIdxs = []int32{
 	0,  // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_grpc_agmem_v1_memories_proto_init() }
-func file_grpc_agmem_v1_memories_proto_init() {
-	if File_grpc_agmem_v1_memories_proto != nil {
+func init() { file_grpc_recall_v1_memories_proto_init() }
+func file_grpc_recall_v1_memories_proto_init() {
+	if File_grpc_recall_v1_memories_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_agmem_v1_memories_proto_rawDesc), len(file_grpc_agmem_v1_memories_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_recall_v1_memories_proto_rawDesc), len(file_grpc_recall_v1_memories_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_grpc_agmem_v1_memories_proto_goTypes,
-		DependencyIndexes: file_grpc_agmem_v1_memories_proto_depIdxs,
-		MessageInfos:      file_grpc_agmem_v1_memories_proto_msgTypes,
+		GoTypes:           file_grpc_recall_v1_memories_proto_goTypes,
+		DependencyIndexes: file_grpc_recall_v1_memories_proto_depIdxs,
+		MessageInfos:      file_grpc_recall_v1_memories_proto_msgTypes,
 	}.Build()
-	File_grpc_agmem_v1_memories_proto = out.File
-	file_grpc_agmem_v1_memories_proto_goTypes = nil
-	file_grpc_agmem_v1_memories_proto_depIdxs = nil
+	File_grpc_recall_v1_memories_proto = out.File
+	file_grpc_recall_v1_memories_proto_goTypes = nil
+	file_grpc_recall_v1_memories_proto_depIdxs = nil
 }
