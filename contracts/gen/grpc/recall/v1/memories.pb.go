@@ -285,8 +285,11 @@ func (x *SearchRequest) GetOrder() string {
 }
 
 type SearchResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []*SearchResult        `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Results []*SearchResult        `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	// Total rows matching the filters regardless of limit/offset — powers
+	// exact pagination.
+	Total         int64 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -326,6 +329,13 @@ func (x *SearchResponse) GetResults() []*SearchResult {
 		return x.Results
 	}
 	return nil
+}
+
+func (x *SearchResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
 }
 
 type SearchResult struct {
@@ -980,9 +990,10 @@ const file_grpc_recall_v1_memories_proto_rawDesc = "" +
 	"\finclude_dead\x18\b \x01(\bR\vincludeDead\x12\x16\n" +
 	"\x06offset\x18\t \x01(\x05R\x06offset\x12\x14\n" +
 	"\x05order\x18\n" +
-	" \x01(\tR\x05order\"H\n" +
+	" \x01(\tR\x05order\"^\n" +
 	"\x0eSearchResponse\x126\n" +
-	"\aresults\x18\x01 \x03(\v2\x1c.grpc.recall.v1.SearchResultR\aresults\"\x83\x03\n" +
+	"\aresults\x18\x01 \x03(\v2\x1c.grpc.recall.v1.SearchResultR\aresults\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\x83\x03\n" +
 	"\fSearchResult\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asummary\x18\x02 \x01(\tR\asummary\x12\x12\n" +

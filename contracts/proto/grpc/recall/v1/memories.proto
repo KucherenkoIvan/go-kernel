@@ -51,6 +51,9 @@ message SearchRequest {
 
 message SearchResponse {
   repeated SearchResult results = 1;
+  // Total rows matching the filters regardless of limit/offset — powers
+  // exact pagination.
+  int64 total = 2;
 }
 
 message SearchResult {
