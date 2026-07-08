@@ -166,15 +166,20 @@ func (x *StoreResponse) GetId() string {
 }
 
 type SearchRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
-	Keywords      []string               `protobuf:"bytes,2,rep,name=keywords,proto3" json:"keywords,omitempty"`                          // all must match
-	KeywordsAny   []string               `protobuf:"bytes,3,rep,name=keywords_any,json=keywordsAny,proto3" json:"keywords_any,omitempty"` // at least one matches; each boosts rank
-	Kind          string                 `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"`
-	Since         *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=since,proto3" json:"since,omitempty"` // absent = no lower bound
-	Until         *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=until,proto3" json:"until,omitempty"` // absent = no upper bound
-	Limit         int32                  `protobuf:"varint,7,opt,name=limit,proto3" json:"limit,omitempty"`
-	IncludeDead   bool                   `protobuf:"varint,8,opt,name=include_dead,json=includeDead,proto3" json:"include_dead,omitempty"` // include superseded and expired
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Query       string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	Keywords    []string               `protobuf:"bytes,2,rep,name=keywords,proto3" json:"keywords,omitempty"`                          // all must match
+	KeywordsAny []string               `protobuf:"bytes,3,rep,name=keywords_any,json=keywordsAny,proto3" json:"keywords_any,omitempty"` // at least one matches; each boosts rank
+	Kind        string                 `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"`
+	Since       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=since,proto3" json:"since,omitempty"` // absent = no lower bound
+	Until       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=until,proto3" json:"until,omitempty"` // absent = no upper bound
+	Limit       int32                  `protobuf:"varint,7,opt,name=limit,proto3" json:"limit,omitempty"`
+	IncludeDead bool                   `protobuf:"varint,8,opt,name=include_dead,json=includeDead,proto3" json:"include_dead,omitempty"` // include superseded and expired
+	Offset      int32                  `protobuf:"varint,9,opt,name=offset,proto3" json:"offset,omitempty"`                              // pagination: ranked rows to skip; ordering is stable (id tiebreak)
+	// Display order. Empty = relevance ranking (the default).
+	// One of: created_asc, created_desc, rating_asc, rating_desc,
+	// reads_asc, reads_desc.
+	Order         string `protobuf:"bytes,10,opt,name=order,proto3" json:"order,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -263,6 +268,20 @@ func (x *SearchRequest) GetIncludeDead() bool {
 		return x.IncludeDead
 	}
 	return false
+}
+
+func (x *SearchRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *SearchRequest) GetOrder() string {
+	if x != nil {
+		return x.Order
+	}
+	return ""
 }
 
 type SearchResponse struct {
@@ -949,7 +968,7 @@ const file_grpc_recall_v1_memories_proto_rawDesc = "" +
 	"supersedes\x18\a \x01(\tR\n" +
 	"supersedes\"\x1f\n" +
 	"\rStoreResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x95\x02\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xc3\x02\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1a\n" +
 	"\bkeywords\x18\x02 \x03(\tR\bkeywords\x12!\n" +
@@ -958,7 +977,10 @@ const file_grpc_recall_v1_memories_proto_rawDesc = "" +
 	"\x05since\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x120\n" +
 	"\x05until\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x05until\x12\x14\n" +
 	"\x05limit\x18\a \x01(\x05R\x05limit\x12!\n" +
-	"\finclude_dead\x18\b \x01(\bR\vincludeDead\"H\n" +
+	"\finclude_dead\x18\b \x01(\bR\vincludeDead\x12\x16\n" +
+	"\x06offset\x18\t \x01(\x05R\x06offset\x12\x14\n" +
+	"\x05order\x18\n" +
+	" \x01(\tR\x05order\"H\n" +
 	"\x0eSearchResponse\x126\n" +
 	"\aresults\x18\x01 \x03(\v2\x1c.grpc.recall.v1.SearchResultR\aresults\"\x83\x03\n" +
 	"\fSearchResult\x12\x0e\n" +

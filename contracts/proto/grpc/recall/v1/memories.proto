@@ -42,6 +42,11 @@ message SearchRequest {
   google.protobuf.Timestamp until = 6;  // absent = no upper bound
   int32 limit = 7;
   bool include_dead = 8;  // include superseded and expired
+  int32 offset = 9;  // pagination: ranked rows to skip; ordering is stable (id tiebreak)
+  // Display order. Empty = relevance ranking (the default).
+  // One of: created_asc, created_desc, rating_asc, rating_desc,
+  // reads_asc, reads_desc.
+  string order = 10;
 }
 
 message SearchResponse {
