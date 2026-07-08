@@ -47,6 +47,9 @@ message SearchRequest {
   // One of: created_asc, created_desc, rating_asc, rating_desc,
   // reads_asc, reads_desc.
   string order = 10;
+  // Skip computing total (it comes back 0) — the exact count costs a
+  // second filter evaluation; callers that discard it should opt out.
+  bool skip_total = 11;
 }
 
 message SearchResponse {

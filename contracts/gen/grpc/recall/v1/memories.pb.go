@@ -179,7 +179,10 @@ type SearchRequest struct {
 	// Display order. Empty = relevance ranking (the default).
 	// One of: created_asc, created_desc, rating_asc, rating_desc,
 	// reads_asc, reads_desc.
-	Order         string `protobuf:"bytes,10,opt,name=order,proto3" json:"order,omitempty"`
+	Order string `protobuf:"bytes,10,opt,name=order,proto3" json:"order,omitempty"`
+	// Skip computing total (it comes back 0) — the exact count costs a
+	// second filter evaluation; callers that discard it should opt out.
+	SkipTotal     bool `protobuf:"varint,11,opt,name=skip_total,json=skipTotal,proto3" json:"skip_total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -282,6 +285,13 @@ func (x *SearchRequest) GetOrder() string {
 		return x.Order
 	}
 	return ""
+}
+
+func (x *SearchRequest) GetSkipTotal() bool {
+	if x != nil {
+		return x.SkipTotal
+	}
+	return false
 }
 
 type SearchResponse struct {
@@ -978,7 +988,7 @@ const file_grpc_recall_v1_memories_proto_rawDesc = "" +
 	"supersedes\x18\a \x01(\tR\n" +
 	"supersedes\"\x1f\n" +
 	"\rStoreResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xc3\x02\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xe2\x02\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1a\n" +
 	"\bkeywords\x18\x02 \x03(\tR\bkeywords\x12!\n" +
@@ -990,7 +1000,9 @@ const file_grpc_recall_v1_memories_proto_rawDesc = "" +
 	"\finclude_dead\x18\b \x01(\bR\vincludeDead\x12\x16\n" +
 	"\x06offset\x18\t \x01(\x05R\x06offset\x12\x14\n" +
 	"\x05order\x18\n" +
-	" \x01(\tR\x05order\"^\n" +
+	" \x01(\tR\x05order\x12\x1d\n" +
+	"\n" +
+	"skip_total\x18\v \x01(\bR\tskipTotal\"^\n" +
 	"\x0eSearchResponse\x126\n" +
 	"\aresults\x18\x01 \x03(\v2\x1c.grpc.recall.v1.SearchResultR\aresults\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"\x83\x03\n" +
