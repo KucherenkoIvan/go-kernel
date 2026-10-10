@@ -94,15 +94,23 @@ func Run(ctx context.Context, srv *grpc.Server, addr string) error {
 // a named pipe, an inherited fd. It takes ownership of lis: the listener is
 // closed when Serve returns.
 func Serve(ctx context.Context, srv *grpc.Server, lis net.Listener) error {
-	done := make(chan struct{})
+	served := make(chan struct{})
+	stopped := make(chan struct{})
 	go func() {
-		defer close(done)
-		<-ctx.Done()
-		srv.GracefulStop()
+		defer close(stopped)
+		select {
+		case <-ctx.Done():
+			srv.GracefulStop()
+		case <-served:
+			// Serve failed on its own: close already-accepted connections
+			// rather than leave them running behind the returned error.
+			srv.Stop()
+		}
 	}()
 
 	err := srv.Serve(lis)
-	<-done
+	close(served)
+	<-stopped // on cancel, GracefulStop drains in-flight RPCs before we return
 	if err == grpc.ErrServerStopped || ctx.Err() != nil {
 		return nil
 	}

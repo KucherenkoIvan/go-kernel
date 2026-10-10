@@ -2,6 +2,7 @@ package grpckit_test
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net"
@@ -64,5 +65,28 @@ func TestServe_UnixSocket(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("Serve did not return after ctx cancel")
+	}
+}
+
+// failingListener's Accept fails permanently, as a broken listener would.
+type failingListener struct{ net.Listener }
+
+func (failingListener) Accept() (net.Conn, error) { return nil, errors.New("accept: broken") }
+func (failingListener) Close() error              { return nil }
+func (failingListener) Addr() net.Addr            { return &net.UnixAddr{Name: "broken", Net: "unix"} }
+
+func TestServe_ListenerFailureReturnsWithoutCancel(t *testing.T) {
+	srv := grpckit.NewServer(grpckit.WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))))
+
+	served := make(chan error, 1)
+	go func() { served <- grpckit.Serve(context.Background(), srv, failingListener{}) }()
+
+	select {
+	case err := <-served:
+		if err == nil {
+			t.Error("Serve = nil, want the accept error")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Serve hung on a failed listener instead of returning its error")
 	}
 }
