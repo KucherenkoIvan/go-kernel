@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -80,8 +81,13 @@ func NewServer(opts ...ServerOption) *grpc.Server {
 	return grpc.NewServer(grpc.ChainUnaryInterceptor(chain...))
 }
 
+// shutdownTimeout bounds how long in-flight RPCs may finish after the
+// context is cancelled; then the remaining connections are closed. A var so
+// tests can shrink it.
+var shutdownTimeout = 10 * time.Second
+
 // Run listens on TCP addr and serves until ctx is cancelled, then stops
-// gracefully. Blocks; returns the Serve error, nil on graceful stop.
+// gracefully. Blocks; see Serve for the lifecycle and return values.
 func Run(ctx context.Context, srv *grpc.Server, addr string) error {
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -91,28 +97,54 @@ func Run(ctx context.Context, srv *grpc.Server, addr string) error {
 }
 
 // Serve is Run on a listener the caller has already opened — a Unix socket,
-// a named pipe, an inherited fd. It takes ownership of lis: the listener is
-// closed when Serve returns.
+// a named pipe, an inherited fd. Blocks until ctx is cancelled, then stops
+// gracefully: in-flight RPCs get shutdownTimeout (10s) to finish before
+// their connections are closed. Returns nil after a cancel.
+//
+// Serve owns both lis and srv: it closes lis and stops srv when it returns,
+// so each *grpc.Server goes to exactly one Serve call. If serving fails
+// while ctx is live — the listener breaks, or srv is stopped from outside —
+// Serve hard-stops srv and returns the error at once.
 func Serve(ctx context.Context, srv *grpc.Server, lis net.Listener) error {
+	addr := lis.Addr().String()
 	served := make(chan struct{})
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
 		select {
 		case <-ctx.Done():
-			srv.GracefulStop()
+			stopGracefully(srv)
 		case <-served:
-			// Serve failed on its own: close already-accepted connections
-			// rather than leave them running behind the returned error.
-			srv.Stop()
+			srv.Stop() // close already-accepted connections too
 		}
 	}()
 
 	err := srv.Serve(lis)
 	close(served)
-	<-stopped // on cancel, GracefulStop drains in-flight RPCs before we return
-	if err == grpc.ErrServerStopped || ctx.Err() != nil {
+	<-stopped
+	if ctx.Err() != nil {
 		return nil
 	}
-	return err
+	if err == nil { // srv.Serve returns nil when srv is stopped from outside
+		err = grpc.ErrServerStopped
+	}
+	return fmt.Errorf("grpckit: serve %s: %w", addr, err)
+}
+
+// stopGracefully is GracefulStop bounded by shutdownTimeout.
+func stopGracefully(srv *grpc.Server) {
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		srv.GracefulStop()
+	}()
+
+	timer := time.NewTimer(shutdownTimeout)
+	defer timer.Stop()
+	select {
+	case <-done:
+	case <-timer.C:
+		srv.Stop() // closes the connections GracefulStop is waiting on
+		<-done
+	}
 }
