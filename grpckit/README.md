@@ -3,7 +3,7 @@
 gRPC servers and clients with the kernel's standard interceptor chain — services never hand-write the serialize/send or deserialize/route path.
 
 - `NewServer` — request-id, panic recovery, logging, and domain-error encoding built in; `WithErrorCode` maps domain codes to gRPC statuses; `WithUnaryInterceptor` appends custom interceptors (auth, metrics) *inside* the standard chain
-- `Run` — listen on a TCP address, serve until ctx cancel, then graceful stop (in-flight RPCs get 10s, then connections are closed)
+- `Run` — listen on a TCP address, serve until ctx cancel, then graceful stop: in-flight RPCs get 10s, then their connections are closed and contexts cancelled, and Run waits for the handlers to return (handlers must honor ctx)
 - `Serve` — the same on a listener you opened yourself (Unix socket, named pipe, inherited fd); `Run` is `net.Listen("tcp", addr)` + `Serve`. Serve owns the listener and the server: both are closed/stopped when it returns, and a listener failure returns at once
 - `Connect` / `MustConnect` — client with request-id propagation and error decoding
 - `RemoteDomainError` — a domain error received over the wire; embeds `ddd.DomainError`, so `ddd.IsDomainError` works **across service boundaries**

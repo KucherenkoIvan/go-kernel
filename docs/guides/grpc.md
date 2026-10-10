@@ -52,7 +52,7 @@ if err := grpckit.Run(ctx, srv, cfg.GRPCAddr); err != nil {
 
 ### Any listener (Unix sockets, named pipes)
 
-`grpckit.Run` listens on TCP. For anything else — a local API on a Unix socket, a Windows named pipe, a socket handed over by the service manager — open the listener yourself and pass it to `grpckit.Serve`. The lifecycle is `Run`'s: serve until ctx is cancelled, then stop gracefully, giving in-flight RPCs 10s before their connections are closed; nil on cancel.
+`grpckit.Run` listens on TCP. For anything else — a local API on a Unix socket, a Windows named pipe, a socket handed over by the service manager — open the listener yourself and pass it to `grpckit.Serve`. The lifecycle is `Run`'s: serve until ctx is cancelled, then stop gracefully. In-flight RPCs get 10s; then their connections are closed and their contexts cancelled, and `Serve` still waits for the handlers to return, so handlers must return when their ctx is cancelled. Returns nil on cancel.
 
 `Serve` owns both arguments. When it returns, the listener is closed and the server stopped, so a `*grpc.Server` goes to exactly one `Serve` call. If serving fails while ctx is live (the listener breaks, or someone stops the server), `Serve` hard-stops the server and returns the error at once.
 
@@ -69,33 +69,56 @@ app.Adapter{Name: "local-api", Run: func(ctx context.Context) error {
 ```
 
 ```go
-// listenUnix opens a Unix socket reachable only by the owner and group of its
-// directory.
+// listenUnix opens a Unix socket that only the owner and group of its
+// directory can reach. The directory must belong to this app alone
+// (/run/myapp/), never a shared one like /run or /tmp.
 func listenUnix(path string) (net.Listener, error) {
-	// Access control is the parent directory's mode, set before the socket
+	// Access control is the directory's mode, in place before the socket
 	// exists. Chmod on the socket after Listen is racy: clients can connect
-	// (and sit in the backlog) before it lands.
+	// (and sit in the backlog) before it lands. Never chmod a directory you
+	// didn't create: create it, or verify an existing one.
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o750); err != nil {
-		return nil, err
-	}
-	if err := os.Chmod(dir, 0o750); err != nil { // MkdirAll keeps an existing dir's mode
+	if err := os.Mkdir(dir, 0o750); errors.Is(err, fs.ErrExist) {
+		if err := checkPrivateDir(dir); err != nil {
+			return nil, err
+		}
+	} else if err != nil {
 		return nil, err
 	}
 
 	// A crashed process leaves its socket file behind, and Listen then fails
-	// with "address already in use". Remove it only if nothing answers —
-	// otherwise another instance is serving.
+	// with "address already in use". Remove it only when a dial is refused,
+	// i.e. nobody is listening. Two instances starting at once can both see
+	// the refusal; take a lock file first if single-instance matters.
 	if fi, err := os.Lstat(path); err == nil && fi.Mode().Type() == fs.ModeSocket {
-		if conn, err := net.Dial("unix", path); err == nil {
+		conn, err := net.Dial("unix", path)
+		switch {
+		case err == nil:
 			_ = conn.Close()
 			return nil, fmt.Errorf("%s: another server is listening", path)
-		}
-		if err := os.Remove(path); err != nil {
-			return nil, err
+		case errors.Is(err, syscall.ECONNREFUSED):
+			if err := os.Remove(path); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("%s: probe existing socket: %w", path, err)
 		}
 	}
 	return net.Listen("unix", path)
+}
+
+// checkPrivateDir accepts an existing directory only if this process's user
+// owns it and it gives no write to group and nothing to others.
+func checkPrivateDir(dir string) error {
+	fi, err := os.Lstat(dir) // Lstat: a symlink is rejected, not followed
+	if err != nil {
+		return err
+	}
+	st, ok := fi.Sys().(*syscall.Stat_t)
+	if !fi.IsDir() || !ok || int(st.Uid) != os.Geteuid() || fi.Mode().Perm()&0o027 != 0 {
+		return fmt.Errorf("%s: want a directory owned by uid %d with mode at most 0750", dir, os.Geteuid())
+	}
+	return nil
 }
 ```
 
@@ -109,7 +132,7 @@ conn := grpckit.MustConnect("unix://" + cfg.SocketPath) // cfg.SocketPath is abs
 
 Socket paths are limited to ~104 bytes on macOS (108 on Linux).
 
-**Windows.** AF_UNIX sockets work on Windows 10 1803+, so the code above runs there too. Named pipes have no gRPC scheme: serve on a pipe listener (e.g. go-winio's `ListenPipe`) and dial with `grpckit.Connect("passthrough:///pipe", grpc.WithContextDialer(...))` around the pipe dialer (go-winio's `DialPipeContext`). Which of the two to use is the service's choice; the kernel depends on neither.
+**Windows.** AF_UNIX sockets work on Windows 10 1803+, but mode bits give no access control there and `listenUnix` above is Unix-only: restrict the directory with an ACL, or use a named pipe with a security descriptor. Named pipes have no gRPC scheme: serve on a pipe listener (e.g. go-winio's `ListenPipe`) and dial with `grpckit.Connect("passthrough:///pipe", grpc.WithContextDialer(...))` around the pipe dialer (go-winio's `DialPipeContext`). Which of the two to use is the service's choice; the kernel depends on neither.
 
 ## Client side
 
@@ -199,8 +222,10 @@ conn, _ := grpckit.Connect("passthrough:///bufnet",
 | Mapping domain errors to statuses by hand in handlers | Return the domain error; the interceptor encodes it |
 | Returning raw internal errors to clients | Automatic — anything non-domain is masked as `Internal` |
 | Editing `contracts/gen/` by hand | Edit the proto, run `buf generate` |
-| `srv.Serve(lis)` + hand-written shutdown for a non-TCP listener | `grpckit.Serve(ctx, srv, lis)` — same bounded graceful stop as `Run` |
+| `srv.Serve(lis)` + hand-written shutdown for a non-TCP listener | `grpckit.Serve(ctx, srv, lis)` — the same shutdown as `Run` |
 | `os.Chmod` on a Unix socket after `net.Listen` | Restrict the parent directory before listening |
+| Socket directly in `/run` or `/tmp`, or chmod of a directory you didn't create | A directory of the app's own: create it 0750, or verify owner and mode of an existing one |
+| Handler that ignores ctx cancellation | Return when `ctx.Done()` fires: shutdown waits for every handler, even after the 10s grace period |
 | Opening the listener in `main` and passing it into an adapter | Open it inside the adapter's `Run`, so a listen failure is the adapter's error |
-| Deleting a socket file unconditionally before `Listen` | Dial first; remove only if nothing answers |
+| Deleting a socket file unconditionally before `Listen` | Dial first; remove only on `ECONNREFUSED` |
 | Breaking changes to a published `v1` proto | New version directory (`v2`) |

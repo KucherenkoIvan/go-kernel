@@ -82,8 +82,8 @@ func NewServer(opts ...ServerOption) *grpc.Server {
 }
 
 // shutdownTimeout bounds how long in-flight RPCs may finish after the
-// context is cancelled; then the remaining connections are closed. A var so
-// tests can shrink it.
+// context is cancelled; then their connections are closed and contexts
+// cancelled. A var so tests can shrink it.
 var shutdownTimeout = 10 * time.Second
 
 // Run listens on TCP addr and serves until ctx is cancelled, then stops
@@ -98,8 +98,10 @@ func Run(ctx context.Context, srv *grpc.Server, addr string) error {
 
 // Serve is Run on a listener the caller has already opened — a Unix socket,
 // a named pipe, an inherited fd. Blocks until ctx is cancelled, then stops
-// gracefully: in-flight RPCs get shutdownTimeout (10s) to finish before
-// their connections are closed. Returns nil after a cancel.
+// gracefully: in-flight RPCs get shutdownTimeout (10s) to finish; then their
+// connections are closed and their contexts cancelled, and Serve waits for
+// the handlers to return, so handlers must return when their ctx is
+// cancelled. Returns nil after a cancel.
 //
 // Serve owns both lis and srv: it closes lis and stops srv when it returns,
 // so each *grpc.Server goes to exactly one Serve call. If serving fails
@@ -131,7 +133,9 @@ func Serve(ctx context.Context, srv *grpc.Server, lis net.Listener) error {
 	return fmt.Errorf("grpckit: serve %s: %w", addr, err)
 }
 
-// stopGracefully is GracefulStop bounded by shutdownTimeout.
+// stopGracefully is GracefulStop with a shutdownTimeout grace period; after
+// it, Stop cancels the remaining RPCs and GracefulStop still waits for their
+// handlers to return.
 func stopGracefully(srv *grpc.Server) {
 	done := make(chan struct{})
 	go func() {
