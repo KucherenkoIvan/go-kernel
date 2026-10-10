@@ -52,27 +52,64 @@ if err := grpckit.Run(ctx, srv, cfg.GRPCAddr); err != nil {
 
 ### Any listener (Unix sockets, named pipes)
 
-`grpckit.Run` listens on TCP. For anything else — a local API on a Unix socket, a Windows named pipe, a socket handed over by the service manager — open the listener yourself and pass it to `grpckit.Serve`. Same lifecycle as `Run`; `Serve` owns the listener and closes it on return.
+`grpckit.Run` listens on TCP. For anything else — a local API on a Unix socket, a Windows named pipe, a socket handed over by the service manager — open the listener yourself and pass it to `grpckit.Serve`. The lifecycle is `Run`'s: serve until ctx is cancelled, then stop gracefully, giving in-flight RPCs 10s before their connections are closed; nil on cancel.
+
+`Serve` owns both arguments. When it returns, the listener is closed and the server stopped, so a `*grpc.Server` goes to exactly one `Serve` call. If serving fails while ctx is live (the listener breaks, or someone stops the server), `Serve` hard-stops the server and returns the error at once.
+
+Compose it as an adapter and open the listener *inside* `Run`, so a listen failure is that adapter's error and shuts the service down like any other ([app guide](./app.md)):
 
 ```go
-lis, err := net.Listen("unix", cfg.SocketPath)
-if err != nil {
-	return err
-}
-// access control is the socket file's permissions — set them before serving
-if err := os.Chmod(cfg.SocketPath, 0o660); err != nil {
-	return err
-}
-return grpckit.Serve(ctx, srv, lis)
+app.Adapter{Name: "local-api", Run: func(ctx context.Context) error {
+	lis, err := listenUnix(cfg.SocketPath)
+	if err != nil {
+		return err
+	}
+	return grpckit.Serve(ctx, srv, lis)
+}},
 ```
-
-Clients dial it with gRPC's built-in `unix` scheme — `unix:///abs/path` or `unix:relative/path`:
 
 ```go
-conn := grpckit.MustConnect("unix://" + cfg.SocketPath)
+// listenUnix opens a Unix socket reachable only by the owner and group of its
+// directory.
+func listenUnix(path string) (net.Listener, error) {
+	// Access control is the parent directory's mode, set before the socket
+	// exists. Chmod on the socket after Listen is racy: clients can connect
+	// (and sit in the backlog) before it lands.
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		return nil, err
+	}
+	if err := os.Chmod(dir, 0o750); err != nil { // MkdirAll keeps an existing dir's mode
+		return nil, err
+	}
+
+	// A crashed process leaves its socket file behind, and Listen then fails
+	// with "address already in use". Remove it only if nothing answers —
+	// otherwise another instance is serving.
+	if fi, err := os.Lstat(path); err == nil && fi.Mode().Type() == fs.ModeSocket {
+		if conn, err := net.Dial("unix", path); err == nil {
+			_ = conn.Close()
+			return nil, fmt.Errorf("%s: another server is listening", path)
+		}
+		if err := os.Remove(path); err != nil {
+			return nil, err
+		}
+	}
+	return net.Listen("unix", path)
+}
 ```
 
-Go's Unix listener removes the socket file on a clean close, but a crashed process leaves it behind and the next `net.Listen` fails with "address already in use" — remove a stale socket file before listening. Socket paths are limited to ~104 bytes on macOS (108 on Linux).
+The directory decides who may connect at all. Per-caller authorization (which local user is calling) belongs in a [`WithUnaryInterceptor`](#custom-interceptors) that reads the peer's credentials (`SO_PEERCRED` on Linux, `LOCAL_PEERCRED` on macOS).
+
+Clients dial with gRPC's built-in `unix` scheme. In `unix://` form the path must be absolute (`unix:///run/myapp/api.sock`); `unix:` + path takes a relative one:
+
+```go
+conn := grpckit.MustConnect("unix://" + cfg.SocketPath) // cfg.SocketPath is absolute
+```
+
+Socket paths are limited to ~104 bytes on macOS (108 on Linux).
+
+**Windows.** AF_UNIX sockets work on Windows 10 1803+, so the code above runs there too. Named pipes have no gRPC scheme: serve on a pipe listener (e.g. go-winio's `ListenPipe`) and dial with `grpckit.Connect("passthrough:///pipe", grpc.WithContextDialer(...))` around the pipe dialer (go-winio's `DialPipeContext`). Which of the two to use is the service's choice; the kernel depends on neither.
 
 ## Client side
 
@@ -162,5 +199,8 @@ conn, _ := grpckit.Connect("passthrough:///bufnet",
 | Mapping domain errors to statuses by hand in handlers | Return the domain error; the interceptor encodes it |
 | Returning raw internal errors to clients | Automatic — anything non-domain is masked as `Internal` |
 | Editing `contracts/gen/` by hand | Edit the proto, run `buf generate` |
-| `srv.Serve(lis)` + hand-written shutdown for a non-TCP listener | `grpckit.Serve(ctx, srv, lis)` — same graceful stop as `Run` |
+| `srv.Serve(lis)` + hand-written shutdown for a non-TCP listener | `grpckit.Serve(ctx, srv, lis)` — same bounded graceful stop as `Run` |
+| `os.Chmod` on a Unix socket after `net.Listen` | Restrict the parent directory before listening |
+| Opening the listener in `main` and passing it into an adapter | Open it inside the adapter's `Run`, so a listen failure is the adapter's error |
+| Deleting a socket file unconditionally before `Listen` | Dial first; remove only if nothing answers |
 | Breaking changes to a published `v1` proto | New version directory (`v2`) |

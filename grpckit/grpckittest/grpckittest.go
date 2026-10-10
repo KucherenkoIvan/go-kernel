@@ -12,10 +12,11 @@ import (
 	"github.com/KucherenkoIvan/go-kernel/grpckit"
 )
 
-// Serve starts srv on an in-memory listener and returns a client connection
-// created through grpckit.Connect — the standard client chain (request-id,
-// error decoding) included, so tests exercise exactly what production runs.
-// Server and connection are cleaned up automatically.
+// Serve starts srv on an in-memory listener and, unlike grpckit.Serve, returns
+// immediately with a client connection created through grpckit.Connect — the
+// standard client chain (request-id, error decoding) included, so tests
+// exercise exactly what production runs. Server and connection are cleaned up
+// automatically.
 //
 //	srv := grpckit.NewServer(grpckit.WithLogger(discard))
 //	couponsv1.RegisterCouponServiceServer(srv, controller)

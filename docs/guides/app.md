@@ -22,6 +22,8 @@ app.Adapter{Name: "http", Run: func(ctx context.Context) error { return httpapi.
 app.Adapter{Name: "events", Run: pub.Run, Close: pub.Close}                                  // both
 ```
 
+A server on a listener other than TCP (a Unix socket for a local API, say) opens the listener inside its `Run`, so a listen failure is that adapter's error: see [gRPC: any listener](./grpc.md#any-listener-unix-sockets-named-pipes).
+
 ## Semantics
 
 ```go
