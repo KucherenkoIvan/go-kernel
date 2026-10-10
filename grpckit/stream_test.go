@@ -272,9 +272,8 @@ func TestStreamInterceptor_AuthFlow(t *testing.T) {
 }
 
 // heldStreamServer sends one message per stream, then holds the stream until
-// its context ends and returns what a push loop would: the error of its next
-// Send. It also ends the stream cleanly once shutdown is cancelled — the
-// pattern for streams that should not hold up a shutdown.
+// its context ends. It also ends the stream cleanly once shutdown is
+// cancelled — the pattern for streams that should not hold up a shutdown.
 type heldStreamServer struct {
 	examplev1.UnimplementedEchoServiceServer
 	shutdown context.Context
@@ -289,15 +288,14 @@ func newHeldStreamServer(shutdown context.Context) *heldStreamServer {
 func (s *heldStreamServer) EchoStream(req *examplev1.EchoStreamRequest, stream grpc.ServerStreamingServer[examplev1.EchoStreamResponse]) error {
 	ctx := stream.Context()
 	defer func() { s.ended <- ctx.Err() }()
-	msg := &examplev1.EchoStreamResponse{Message: req.GetMessage()}
-	if err := stream.Send(msg); err != nil {
+	if err := stream.Send(&examplev1.EchoStreamResponse{Message: req.GetMessage()}); err != nil {
 		return err
 	}
 	s.entered <- struct{}{}
 
 	select {
 	case <-ctx.Done():
-		return stream.Send(msg)
+		return ctx.Err()
 	case <-s.shutdown.Done():
 		return nil
 	}
@@ -353,10 +351,10 @@ func TestEchoStream_ClientCancelIsNotAHandlerError(t *testing.T) {
 	}
 	// The interceptor logs after the handler returns.
 	deadline := time.Now().Add(5 * time.Second)
-	for !strings.Contains(logs.String(), "rpc ended by context") && time.Now().Before(deadline) {
+	for !strings.Contains(logs.String(), "rpc cancelled") && time.Now().Before(deadline) {
 		time.Sleep(10 * time.Millisecond)
 	}
-	if !strings.Contains(logs.String(), "level=DEBUG msg=\"rpc ended by context\"") {
+	if !strings.Contains(logs.String(), "level=DEBUG msg=\"rpc cancelled\"") {
 		t.Errorf("the cancel was not logged at debug:\n%s", logs)
 	}
 	if strings.Contains(logs.String(), "level=ERROR") {
@@ -443,6 +441,50 @@ func TestServe_ShutdownAwareStreamEndsBeforeTheBound(t *testing.T) {
 	}
 	if _, err := stream.Recv(); !errors.Is(err, io.EOF) {
 		t.Errorf("client Recv = %v, want a clean io.EOF", err)
+	}
+}
+
+// slowEchoServer holds every unary call until its context ends.
+type slowEchoServer struct {
+	examplev1.UnimplementedEchoServiceServer
+}
+
+func (slowEchoServer) Echo(ctx context.Context, _ *examplev1.EchoRequest) (*examplev1.EchoResponse, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+// serverDeadline gives every RPC a deadline on the server side, outside the
+// standard chain. It stands in for a client deadline that reaches the server
+// before the client's cancel does: on a fast link the cancel usually wins,
+// and the handler sees Canceled instead.
+func serverDeadline(d time.Duration) grpc.ServerOption {
+	return grpc.UnaryInterceptor(func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		ctx, cancel := context.WithTimeout(ctx, d)
+		defer cancel()
+		return handler(ctx, req)
+	})
+}
+
+func TestEcho_DeadlineIsAWarningNotAHandlerError(t *testing.T) {
+	logs := &syncBuffer{}
+	srv := grpckit.NewServer(
+		grpckit.WithLogger(slog.New(slog.NewTextHandler(logs, nil))),
+		grpckit.WithGRPCOptions(serverDeadline(50*time.Millisecond)),
+	)
+	examplev1.RegisterEchoServiceServer(srv, slowEchoServer{})
+	client := examplev1.NewEchoServiceClient(grpckittest.Serve(t, srv))
+
+	// No client deadline: the status comes from the server's chain.
+	_, err := client.Echo(context.Background(), &examplev1.EchoRequest{Message: "slow"})
+	if status.Code(err) != codes.DeadlineExceeded {
+		t.Fatalf("Echo past its deadline = %v, want DeadlineExceeded", err)
+	}
+	if !strings.Contains(logs.String(), "level=WARN msg=\"rpc deadline exceeded\"") {
+		t.Errorf("the deadline was not logged at warn:\n%s", logs)
+	}
+	if strings.Contains(logs.String(), "level=ERROR") {
+		t.Errorf("a deadline was logged as a handler error:\n%s", logs)
 	}
 }
 

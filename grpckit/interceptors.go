@@ -61,10 +61,12 @@ func recoverPanic(log *slog.Logger, err *error) {
 	}
 }
 
-// handlerError logs and encodes the error a handler returned. An error caused
-// by the RPC's own cancellation (the client went away, the deadline passed,
-// the server is shutting down) is routine for a streaming RPC: it becomes
-// Canceled/DeadlineExceeded and is logged at debug, not as a handler failure.
+// handlerError logs and encodes the error a unary or streaming handler
+// returned. An error that comes from the RPC's own context ending (the client
+// cancelled, the deadline passed, the server closed the connection on
+// shutdown) is reported as Canceled/DeadlineExceeded, not as a handler
+// failure: a client cancel is routine and logged at debug; a deadline, or an
+// Unavailable that may be a real outage, is logged at warn.
 func handlerError(ctx context.Context, log *slog.Logger, err error, codeFor func(string) codes.Code) error {
 	switch {
 	case err == nil:
@@ -72,20 +74,33 @@ func handlerError(ctx context.Context, log *slog.Logger, err error, codeFor func
 	case ddd.IsDomainError(err):
 		log.Debug("domain error", "code", err.Error())
 		return encodeError(err, codeFor)
-	case causedByCancel(ctx, err):
-		log.Debug("rpc ended by context", "error", err)
-		return status.FromContextError(ctx.Err()).Err()
+	case endedByContext(ctx, err):
+		ended := status.FromContextError(ctx.Err())
+		switch {
+		case status.Code(err) == codes.Unavailable:
+			// Send/Recv on a connection the server closed, or a downstream
+			// outage that raced the cancel. Either way nobody is left to
+			// receive it, so it is folded into the context's code; the warn
+			// keeps a real outage visible.
+			log.Warn("rpc unavailable after its context ended", "code", ended.Code(), "error", err)
+		case ended.Code() == codes.DeadlineExceeded:
+			log.Warn("rpc deadline exceeded", "error", err)
+		default:
+			log.Debug("rpc cancelled", "error", err)
+		}
+		return ended.Err()
 	default:
 		log.Error("handler error", "error", err)
 		return encodeError(err, codeFor)
 	}
 }
 
-// causedByCancel reports whether err is the RPC context's own end: ctx.Err()
-// itself, or what a stream's Send/Recv returns once the context is done —
-// Canceled/DeadlineExceeded after a client cancel or deadline, Unavailable
-// ("transport is closing") after the server closes the connection.
-func causedByCancel(ctx context.Context, err error) bool {
+// endedByContext reports whether err comes from the RPC's context ending:
+// ctx.Err() itself (possibly wrapped), or what a stream's Send/Recv returns
+// once the context is done — Canceled/DeadlineExceeded after a client cancel
+// or deadline, Unavailable ("transport is closing") after the server closes
+// the connection. Any other error is the handler's own, even after the end.
+func endedByContext(ctx context.Context, err error) bool {
 	ctxErr := ctx.Err()
 	if ctxErr == nil {
 		return false
