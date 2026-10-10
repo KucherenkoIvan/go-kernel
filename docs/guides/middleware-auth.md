@@ -80,7 +80,7 @@ gRPC has no route groups — exemptions and per-service policies are `info.FullM
 
 ### Stream auth interceptor
 
-A stream interceptor can't pass a new context to the handler directly: it wraps the stream so that `Context()` returns one. The stream it receives already carries the request id, and the same guarantees hold (panics recovered, domain errors encoded into the status that ends the stream).
+A stream handler takes no context argument, so a stream interceptor passes a new context by wrapping the stream: `grpckit.StreamWithContext(ctx, ss)` returns `ss` with `Context()` replaced. The stream it receives already carries the request id, and the same guarantees hold (panics recovered, domain errors encoded into the status that ends the stream).
 
 ```go
 func StreamAuthInterceptor(verifier TokenVerifier) grpc.StreamServerInterceptor {
@@ -93,17 +93,9 @@ func StreamAuthInterceptor(verifier TokenVerifier) grpc.StreamServerInterceptor 
 		if err != nil {
 			return status.Error(codes.Unauthenticated, "unauthenticated")
 		}
-		return handler(srv, &principalStream{ServerStream: ss, ctx: auth.WithPrincipal(ss.Context(), principal)})
+		return handler(srv, grpckit.StreamWithContext(auth.WithPrincipal(ss.Context(), principal), ss))
 	}
 }
-
-// principalStream is the stream with its Context replaced.
-type principalStream struct {
-	grpc.ServerStream
-	ctx context.Context
-}
-
-func (s *principalStream) Context() context.Context { return s.ctx }
 ```
 
 Authentication happens once, when the stream opens; a long-lived stream outlives its token unless the handler re-checks or the server ends the stream when the token expires.
