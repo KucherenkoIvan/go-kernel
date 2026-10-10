@@ -26,6 +26,7 @@ type serverConfig struct {
 	errorCodes         map[string]codes.Code
 	unaryInterceptors  []grpc.UnaryServerInterceptor
 	streamInterceptors []grpc.StreamServerInterceptor
+	grpcOptions        []grpc.ServerOption
 }
 
 // ServerOption customizes NewServer.
@@ -67,6 +68,17 @@ func WithStreamInterceptor(i grpc.StreamServerInterceptor) ServerOption {
 	return func(c *serverConfig) { c.streamInterceptors = append(c.streamInterceptors, i) }
 }
 
+// WithGRPCOptions passes options through to grpc.NewServer, after the
+// standard chain: keepalive, credentials, message size and stream limits,
+// stats handlers. May be given multiple times.
+//
+// Interceptors go through WithUnaryInterceptor / WithStreamInterceptor, not
+// here: a grpc.UnaryInterceptor or grpc.StreamInterceptor passed here runs
+// outside the standard chain, without its guarantees.
+func WithGRPCOptions(opts ...grpc.ServerOption) ServerOption {
+	return func(c *serverConfig) { c.grpcOptions = append(c.grpcOptions, opts...) }
+}
+
 // NewServer creates a *grpc.Server with the standard interceptor chain.
 // Register generated services on it as usual, then start it with Run (TCP)
 // or Serve (any listener).
@@ -94,10 +106,10 @@ func NewServer(opts ...ServerOption) *grpc.Server {
 		[]grpc.StreamServerInterceptor{streamServerInterceptor(cfg.logger, codeFor)},
 		cfg.streamInterceptors...,
 	)
-	return grpc.NewServer(
+	return grpc.NewServer(append([]grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(unary...),
 		grpc.ChainStreamInterceptor(stream...),
-	)
+	}, cfg.grpcOptions...)...)
 }
 
 // shutdownTimeout bounds how long in-flight RPCs may finish after the

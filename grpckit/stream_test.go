@@ -226,19 +226,10 @@ func streamAuthInterceptor() grpc.StreamServerInterceptor {
 		case token[0] == "panic":
 			panic("auth exploded")
 		}
-		return handler(srv, &principalStream{
-			ServerStream: ss,
-			ctx:          auth.WithPrincipal(ss.Context(), auth.Principal{UserID: "u-1"}),
-		})
+		p := auth.Principal{UserID: "u-1"}
+		return handler(srv, grpckit.StreamWithContext(auth.WithPrincipal(ss.Context(), p), ss))
 	}
 }
-
-type principalStream struct {
-	grpc.ServerStream
-	ctx context.Context
-}
-
-func (s *principalStream) Context() context.Context { return s.ctx }
 
 func (s *principalEchoServer) EchoStream(_ *examplev1.EchoStreamRequest, stream grpc.ServerStreamingServer[examplev1.EchoStreamResponse]) error {
 	p, ok := auth.PrincipalFrom(stream.Context())
@@ -452,5 +443,22 @@ func TestServe_ShutdownAwareStreamEndsBeforeTheBound(t *testing.T) {
 	}
 	if _, err := stream.Recv(); !errors.Is(err, io.EOF) {
 		t.Errorf("client Recv = %v, want a clean io.EOF", err)
+	}
+}
+
+func TestWithGRPCOptions_ReachTheServer(t *testing.T) {
+	srv := grpckit.NewServer(
+		grpckit.WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
+		grpckit.WithGRPCOptions(grpc.MaxRecvMsgSize(16)),
+	)
+	examplev1.RegisterEchoServiceServer(srv, &echoServer{})
+	client := examplev1.NewEchoServiceClient(grpckittest.Serve(t, srv))
+
+	if _, err := client.Echo(context.Background(), &examplev1.EchoRequest{Message: "short"}); err != nil {
+		t.Fatalf("a message under the limit: %v", err)
+	}
+	_, err := client.Echo(context.Background(), &examplev1.EchoRequest{Message: strings.Repeat("x", 64)})
+	if status.Code(err) != codes.ResourceExhausted {
+		t.Errorf("a message over MaxRecvMsgSize = %v, want ResourceExhausted", err)
 	}
 }

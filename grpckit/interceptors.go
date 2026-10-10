@@ -24,13 +24,7 @@ func serverInterceptor(logger *slog.Logger, codeFor func(string) codes.Code) grp
 	) (resp any, err error) {
 		ctx = ensureRequestID(ctx)
 		log := logger.With("method", info.FullMethod, "requestId", RequestID(ctx))
-
-		defer func() {
-			if r := recover(); r != nil {
-				log.Error("panic in grpc handler", "panic", r, "stack", string(debug.Stack()))
-				resp, err = nil, status.Error(codes.Internal, "internal error")
-			}
-		}()
+		defer recoverPanic(log, &err)
 
 		resp, err = handler(ctx, req)
 		return resp, handlerError(ctx, log, err, codeFor)
@@ -50,16 +44,20 @@ func streamServerInterceptor(logger *slog.Logger, codeFor func(string) codes.Cod
 	) (err error) {
 		ctx := ensureRequestID(ss.Context())
 		log := logger.With("method", info.FullMethod, "requestId", RequestID(ctx))
+		defer recoverPanic(log, &err)
 
-		defer func() {
-			if r := recover(); r != nil {
-				log.Error("panic in grpc handler", "panic", r, "stack", string(debug.Stack()))
-				err = status.Error(codes.Internal, "internal error")
-			}
-		}()
-
-		err = handler(srv, &contextServerStream{ServerStream: ss, ctx: ctx})
+		err = handler(srv, StreamWithContext(ctx, ss))
 		return handlerError(ctx, log, err, codeFor)
+	}
+}
+
+// recoverPanic turns a panic in the handler (or an interceptor after the
+// standard one) into a masked Internal. Only the handler's own goroutine is
+// covered: a panic in a goroutine the handler starts still crashes the process.
+func recoverPanic(log *slog.Logger, err *error) {
+	if r := recover(); r != nil {
+		log.Error("panic in grpc handler", "panic", r, "stack", string(debug.Stack()))
+		*err = status.Error(codes.Internal, "internal error")
 	}
 }
 
@@ -101,15 +99,6 @@ func causedByCancel(ctx context.Context, err error) bool {
 	}
 	return false
 }
-
-// contextServerStream replaces a ServerStream's Context — the way to hand a
-// streaming handler a derived context.
-type contextServerStream struct {
-	grpc.ServerStream
-	ctx context.Context
-}
-
-func (s *contextServerStream) Context() context.Context { return s.ctx }
 
 // clientInterceptor is the standard unary client chain: request-id
 // propagation and domain-error decoding.
