@@ -50,6 +50,30 @@ if err := grpckit.Run(ctx, srv, cfg.GRPCAddr); err != nil {
 
 `grpckit.Run` serves until the context is cancelled, then stops gracefully.
 
+### Any listener (Unix sockets, named pipes)
+
+`grpckit.Run` listens on TCP. For anything else — a local API on a Unix socket, a Windows named pipe, a socket handed over by the service manager — open the listener yourself and pass it to `grpckit.Serve`. Same lifecycle as `Run`; `Serve` owns the listener and closes it on return.
+
+```go
+lis, err := net.Listen("unix", cfg.SocketPath)
+if err != nil {
+	return err
+}
+// access control is the socket file's permissions — set them before serving
+if err := os.Chmod(cfg.SocketPath, 0o660); err != nil {
+	return err
+}
+return grpckit.Serve(ctx, srv, lis)
+```
+
+Clients dial it with gRPC's built-in `unix` scheme — `unix:///abs/path` or `unix:relative/path`:
+
+```go
+conn := grpckit.MustConnect("unix://" + cfg.SocketPath)
+```
+
+Go's Unix listener removes the socket file on a clean close, but a crashed process leaves it behind and the next `net.Listen` fails with "address already in use" — remove a stale socket file before listening. Socket paths are limited to ~104 bytes on macOS (108 on Linux).
+
 ## Client side
 
 `grpckit.Connect` + a generated client is the whole "universal client": serialization, request-id propagation, and error decoding are already handled. The gateway adapter only maps types:
@@ -138,4 +162,5 @@ conn, _ := grpckit.Connect("passthrough:///bufnet",
 | Mapping domain errors to statuses by hand in handlers | Return the domain error; the interceptor encodes it |
 | Returning raw internal errors to clients | Automatic — anything non-domain is masked as `Internal` |
 | Editing `contracts/gen/` by hand | Edit the proto, run `buf generate` |
+| `srv.Serve(lis)` + hand-written shutdown for a non-TCP listener | `grpckit.Serve(ctx, srv, lis)` — same graceful stop as `Run` |
 | Breaking changes to a published `v1` proto | New version directory (`v2`) |

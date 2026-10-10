@@ -55,7 +55,8 @@ func WithUnaryInterceptor(i grpc.UnaryServerInterceptor) ServerOption {
 }
 
 // NewServer creates a *grpc.Server with the standard interceptor chain.
-// Register generated services on it as usual, then start it with Run.
+// Register generated services on it as usual, then start it with Run (TCP)
+// or Serve (any listener).
 func NewServer(opts ...ServerOption) *grpc.Server {
 	cfg := &serverConfig{
 		logger:     slog.Default(),
@@ -79,14 +80,20 @@ func NewServer(opts ...ServerOption) *grpc.Server {
 	return grpc.NewServer(grpc.ChainUnaryInterceptor(chain...))
 }
 
-// Run listens on addr and serves until ctx is cancelled, then stops
+// Run listens on TCP addr and serves until ctx is cancelled, then stops
 // gracefully. Blocks; returns the Serve error, nil on graceful stop.
 func Run(ctx context.Context, srv *grpc.Server, addr string) error {
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("grpckit: listen %s: %w", addr, err)
 	}
+	return Serve(ctx, srv, lis)
+}
 
+// Serve is Run on a listener the caller has already opened — a Unix socket,
+// a named pipe, an inherited fd. It takes ownership of lis: the listener is
+// closed when Serve returns.
+func Serve(ctx context.Context, srv *grpc.Server, lis net.Listener) error {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
@@ -94,7 +101,7 @@ func Run(ctx context.Context, srv *grpc.Server, addr string) error {
 		srv.GracefulStop()
 	}()
 
-	err = srv.Serve(lis)
+	err := srv.Serve(lis)
 	<-done
 	if err == grpc.ErrServerStopped || ctx.Err() != nil {
 		return nil

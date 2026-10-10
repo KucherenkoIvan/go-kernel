@@ -15,6 +15,9 @@ import (
 //	conn := grpckit.MustConnect(cfg.CouponsGRPCURL)
 //	client := couponsv1.NewCouponServiceClient(conn)
 //
+// target is any gRPC name: "host:port", "dns:///host:port", or
+// "unix:///abs/path" for a server on a Unix socket (see Serve).
+//
 // Transport is plaintext (service-to-service inside a private network); TLS
 // can be added as an option when a deployment needs it.
 func Connect(target string, extra ...grpc.DialOption) (*grpc.ClientConn, error) {

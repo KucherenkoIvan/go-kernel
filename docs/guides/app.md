@@ -29,7 +29,7 @@ err := app.Run(ctx, adapters...)
 ```
 
 1. All `Run`s start **concurrently**.
-2. The shared context is cancelled by SIGINT/SIGTERM, by the parent ctx, or by the first `Run` returning an error — everything then shuts down. Kernel `Run` functions (`httpapi.Run`, `grpckit.Run`, `ChannelPublisher.Run`, `Relay.Run`, `Consumer.Run`) finish in-flight work and return nil on cancellation.
+2. The shared context is cancelled by SIGINT/SIGTERM, by the parent ctx, or by the first `Run` returning an error — everything then shuts down. Kernel `Run` functions (`httpapi.Run`, `grpckit.Run`/`Serve`, `ChannelPublisher.Run`, `Relay.Run`, `Consumer.Run`) finish in-flight work and return nil on cancellation.
 3. After **all** `Run`s have returned, `Close` runs in **reverse registration order**, with a 15s total budget.
 4. The returned error joins run and close failures; nil means a clean shutdown.
 
