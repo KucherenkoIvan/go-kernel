@@ -10,7 +10,7 @@ import (
 // Connect creates a client connection with the standard interceptor chain.
 // Wrap it with a generated client — that pair is the "universal client":
 // serialization, request-id propagation, and error decoding are already
-// handled, adapters only map types.
+// handled for unary and streaming calls, adapters only map types.
 //
 //	conn := grpckit.MustConnect(cfg.CouponsGRPCURL)
 //	client := couponsv1.NewCouponServiceClient(conn)
@@ -24,6 +24,7 @@ func Connect(target string, extra ...grpc.DialOption) (*grpc.ClientConn, error) 
 	opts := append([]grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(clientInterceptor()),
+		grpc.WithChainStreamInterceptor(streamClientInterceptor()),
 	}, extra...)
 
 	conn, err := grpc.NewClient(target, opts...)

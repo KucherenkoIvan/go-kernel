@@ -6,6 +6,8 @@
 //     into rich statuses (never leaking internal errors);
 //   - client: request-id propagation, rich statuses decoded back into domain
 //     errors (RemoteDomainError).
+//
+// Both chains cover unary and streaming RPCs alike.
 package grpckit
 
 import (
@@ -20,9 +22,10 @@ import (
 )
 
 type serverConfig struct {
-	logger       *slog.Logger
-	errorCodes   map[string]codes.Code
-	interceptors []grpc.UnaryServerInterceptor
+	logger             *slog.Logger
+	errorCodes         map[string]codes.Code
+	unaryInterceptors  []grpc.UnaryServerInterceptor
+	streamInterceptors []grpc.StreamServerInterceptor
 }
 
 // ServerOption customizes NewServer.
@@ -52,7 +55,16 @@ func WithErrorCode(domainCode string, grpcCode codes.Code) ServerOption {
 // in context, and domain errors they return are encoded into rich statuses
 // like any handler error.
 func WithUnaryInterceptor(i grpc.UnaryServerInterceptor) ServerOption {
-	return func(c *serverConfig) { c.interceptors = append(c.interceptors, i) }
+	return func(c *serverConfig) { c.unaryInterceptors = append(c.unaryInterceptors, i) }
+}
+
+// WithStreamInterceptor is WithUnaryInterceptor for streaming RPCs, with the
+// same guarantees: the stream it receives already carries the request id in
+// its Context, and its panics and errors go through the standard chain.
+// Interceptors that apply to every RPC (auth, metrics) are registered with
+// both options.
+func WithStreamInterceptor(i grpc.StreamServerInterceptor) ServerOption {
+	return func(c *serverConfig) { c.streamInterceptors = append(c.streamInterceptors, i) }
 }
 
 // NewServer creates a *grpc.Server with the standard interceptor chain.
@@ -74,11 +86,18 @@ func NewServer(opts ...ServerOption) *grpc.Server {
 		return codes.FailedPrecondition
 	}
 
-	chain := append(
+	unary := append(
 		[]grpc.UnaryServerInterceptor{serverInterceptor(cfg.logger, codeFor)},
-		cfg.interceptors...,
+		cfg.unaryInterceptors...,
 	)
-	return grpc.NewServer(grpc.ChainUnaryInterceptor(chain...))
+	stream := append(
+		[]grpc.StreamServerInterceptor{streamServerInterceptor(cfg.logger, codeFor)},
+		cfg.streamInterceptors...,
+	)
+	return grpc.NewServer(
+		grpc.ChainUnaryInterceptor(unary...),
+		grpc.ChainStreamInterceptor(stream...),
+	)
 }
 
 // shutdownTimeout bounds how long in-flight RPCs may finish after the
