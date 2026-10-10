@@ -8,6 +8,10 @@ package grpc.example.v1;
 
 service EchoService {
   rpc Echo(EchoRequest) returns (EchoResponse);
+  // Server streaming: the message echoed back count times.
+  rpc EchoStream(EchoStreamRequest) returns (stream EchoStreamResponse);
+  // Bidirectional streaming: every message echoed back as it arrives.
+  rpc EchoChat(stream EchoChatRequest) returns (stream EchoChatResponse);
 }
 
 message EchoRequest {
@@ -15,5 +19,22 @@ message EchoRequest {
 }
 
 message EchoResponse {
+  string message = 1;
+}
+
+message EchoStreamRequest {
+  string message = 1;
+  int32 count = 2;
+}
+
+message EchoStreamResponse {
+  string message = 1;
+}
+
+message EchoChatRequest {
+  string message = 1;
+}
+
+message EchoChatResponse {
   string message = 1;
 }

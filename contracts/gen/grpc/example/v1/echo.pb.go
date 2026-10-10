@@ -114,6 +114,190 @@ func (x *EchoResponse) GetMessage() string {
 	return ""
 }
 
+type EchoStreamRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Count         int32                  `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EchoStreamRequest) Reset() {
+	*x = EchoStreamRequest{}
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EchoStreamRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EchoStreamRequest) ProtoMessage() {}
+
+func (x *EchoStreamRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EchoStreamRequest.ProtoReflect.Descriptor instead.
+func (*EchoStreamRequest) Descriptor() ([]byte, []int) {
+	return file_grpc_example_v1_echo_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *EchoStreamRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *EchoStreamRequest) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+type EchoStreamResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EchoStreamResponse) Reset() {
+	*x = EchoStreamResponse{}
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EchoStreamResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EchoStreamResponse) ProtoMessage() {}
+
+func (x *EchoStreamResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EchoStreamResponse.ProtoReflect.Descriptor instead.
+func (*EchoStreamResponse) Descriptor() ([]byte, []int) {
+	return file_grpc_example_v1_echo_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *EchoStreamResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type EchoChatRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EchoChatRequest) Reset() {
+	*x = EchoChatRequest{}
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EchoChatRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EchoChatRequest) ProtoMessage() {}
+
+func (x *EchoChatRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EchoChatRequest.ProtoReflect.Descriptor instead.
+func (*EchoChatRequest) Descriptor() ([]byte, []int) {
+	return file_grpc_example_v1_echo_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *EchoChatRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type EchoChatResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EchoChatResponse) Reset() {
+	*x = EchoChatResponse{}
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EchoChatResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EchoChatResponse) ProtoMessage() {}
+
+func (x *EchoChatResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_example_v1_echo_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EchoChatResponse.ProtoReflect.Descriptor instead.
+func (*EchoChatResponse) Descriptor() ([]byte, []int) {
+	return file_grpc_example_v1_echo_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *EchoChatResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_grpc_example_v1_echo_proto protoreflect.FileDescriptor
 
 const file_grpc_example_v1_echo_proto_rawDesc = "" +
@@ -122,9 +306,21 @@ const file_grpc_example_v1_echo_proto_rawDesc = "" +
 	"\vEchoRequest\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"(\n" +
 	"\fEchoResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2R\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"C\n" +
+	"\x11EchoStreamRequest\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\".\n" +
+	"\x12EchoStreamResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"+\n" +
+	"\x0fEchoChatRequest\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\",\n" +
+	"\x10EchoChatResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\x80\x02\n" +
 	"\vEchoService\x12C\n" +
-	"\x04Echo\x12\x1c.grpc.example.v1.EchoRequest\x1a\x1d.grpc.example.v1.EchoResponseB\xcb\x01\n" +
+	"\x04Echo\x12\x1c.grpc.example.v1.EchoRequest\x1a\x1d.grpc.example.v1.EchoResponse\x12W\n" +
+	"\n" +
+	"EchoStream\x12\".grpc.example.v1.EchoStreamRequest\x1a#.grpc.example.v1.EchoStreamResponse0\x01\x12S\n" +
+	"\bEchoChat\x12 .grpc.example.v1.EchoChatRequest\x1a!.grpc.example.v1.EchoChatResponse(\x010\x01B\xcb\x01\n" +
 	"\x13com.grpc.example.v1B\tEchoProtoP\x01ZKgithub.com/KucherenkoIvan/go-kernel/contracts/gen/grpc/example/v1;examplev1\xa2\x02\x03GEX\xaa\x02\x0fGrpc.Example.V1\xca\x02\x0fGrpc\\Example\\V1\xe2\x02\x1bGrpc\\Example\\V1\\GPBMetadata\xea\x02\x11Grpc::Example::V1b\x06proto3"
 
 var (
@@ -139,16 +335,24 @@ func file_grpc_example_v1_echo_proto_rawDescGZIP() []byte {
 	return file_grpc_example_v1_echo_proto_rawDescData
 }
 
-var file_grpc_example_v1_echo_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_grpc_example_v1_echo_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_grpc_example_v1_echo_proto_goTypes = []any{
-	(*EchoRequest)(nil),  // 0: grpc.example.v1.EchoRequest
-	(*EchoResponse)(nil), // 1: grpc.example.v1.EchoResponse
+	(*EchoRequest)(nil),        // 0: grpc.example.v1.EchoRequest
+	(*EchoResponse)(nil),       // 1: grpc.example.v1.EchoResponse
+	(*EchoStreamRequest)(nil),  // 2: grpc.example.v1.EchoStreamRequest
+	(*EchoStreamResponse)(nil), // 3: grpc.example.v1.EchoStreamResponse
+	(*EchoChatRequest)(nil),    // 4: grpc.example.v1.EchoChatRequest
+	(*EchoChatResponse)(nil),   // 5: grpc.example.v1.EchoChatResponse
 }
 var file_grpc_example_v1_echo_proto_depIdxs = []int32{
 	0, // 0: grpc.example.v1.EchoService.Echo:input_type -> grpc.example.v1.EchoRequest
-	1, // 1: grpc.example.v1.EchoService.Echo:output_type -> grpc.example.v1.EchoResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: grpc.example.v1.EchoService.EchoStream:input_type -> grpc.example.v1.EchoStreamRequest
+	4, // 2: grpc.example.v1.EchoService.EchoChat:input_type -> grpc.example.v1.EchoChatRequest
+	1, // 3: grpc.example.v1.EchoService.Echo:output_type -> grpc.example.v1.EchoResponse
+	3, // 4: grpc.example.v1.EchoService.EchoStream:output_type -> grpc.example.v1.EchoStreamResponse
+	5, // 5: grpc.example.v1.EchoService.EchoChat:output_type -> grpc.example.v1.EchoChatResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -165,7 +369,7 @@ func file_grpc_example_v1_echo_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_example_v1_echo_proto_rawDesc), len(file_grpc_example_v1_echo_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

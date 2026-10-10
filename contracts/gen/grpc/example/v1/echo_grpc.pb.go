@@ -24,7 +24,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	EchoService_Echo_FullMethodName = "/grpc.example.v1.EchoService/Echo"
+	EchoService_Echo_FullMethodName       = "/grpc.example.v1.EchoService/Echo"
+	EchoService_EchoStream_FullMethodName = "/grpc.example.v1.EchoService/EchoStream"
+	EchoService_EchoChat_FullMethodName   = "/grpc.example.v1.EchoService/EchoChat"
 )
 
 // EchoServiceClient is the client API for EchoService service.
@@ -32,6 +34,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EchoServiceClient interface {
 	Echo(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*EchoResponse, error)
+	// Server streaming: the message echoed back count times.
+	EchoStream(ctx context.Context, in *EchoStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[EchoStreamResponse], error)
+	// Bidirectional streaming: every message echoed back as it arrives.
+	EchoChat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[EchoChatRequest, EchoChatResponse], error)
 }
 
 type echoServiceClient struct {
@@ -52,11 +58,47 @@ func (c *echoServiceClient) Echo(ctx context.Context, in *EchoRequest, opts ...g
 	return out, nil
 }
 
+func (c *echoServiceClient) EchoStream(ctx context.Context, in *EchoStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[EchoStreamResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &EchoService_ServiceDesc.Streams[0], EchoService_EchoStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[EchoStreamRequest, EchoStreamResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type EchoService_EchoStreamClient = grpc.ServerStreamingClient[EchoStreamResponse]
+
+func (c *echoServiceClient) EchoChat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[EchoChatRequest, EchoChatResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &EchoService_ServiceDesc.Streams[1], EchoService_EchoChat_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[EchoChatRequest, EchoChatResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type EchoService_EchoChatClient = grpc.BidiStreamingClient[EchoChatRequest, EchoChatResponse]
+
 // EchoServiceServer is the server API for EchoService service.
 // All implementations must embed UnimplementedEchoServiceServer
 // for forward compatibility.
 type EchoServiceServer interface {
 	Echo(context.Context, *EchoRequest) (*EchoResponse, error)
+	// Server streaming: the message echoed back count times.
+	EchoStream(*EchoStreamRequest, grpc.ServerStreamingServer[EchoStreamResponse]) error
+	// Bidirectional streaming: every message echoed back as it arrives.
+	EchoChat(grpc.BidiStreamingServer[EchoChatRequest, EchoChatResponse]) error
 	mustEmbedUnimplementedEchoServiceServer()
 }
 
@@ -69,6 +111,12 @@ type UnimplementedEchoServiceServer struct{}
 
 func (UnimplementedEchoServiceServer) Echo(context.Context, *EchoRequest) (*EchoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Echo not implemented")
+}
+func (UnimplementedEchoServiceServer) EchoStream(*EchoStreamRequest, grpc.ServerStreamingServer[EchoStreamResponse]) error {
+	return status.Error(codes.Unimplemented, "method EchoStream not implemented")
+}
+func (UnimplementedEchoServiceServer) EchoChat(grpc.BidiStreamingServer[EchoChatRequest, EchoChatResponse]) error {
+	return status.Error(codes.Unimplemented, "method EchoChat not implemented")
 }
 func (UnimplementedEchoServiceServer) mustEmbedUnimplementedEchoServiceServer() {}
 func (UnimplementedEchoServiceServer) testEmbeddedByValue()                     {}
@@ -109,6 +157,24 @@ func _EchoService_Echo_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EchoService_EchoStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(EchoStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(EchoServiceServer).EchoStream(m, &grpc.GenericServerStream[EchoStreamRequest, EchoStreamResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type EchoService_EchoStreamServer = grpc.ServerStreamingServer[EchoStreamResponse]
+
+func _EchoService_EchoChat_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(EchoServiceServer).EchoChat(&grpc.GenericServerStream[EchoChatRequest, EchoChatResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type EchoService_EchoChatServer = grpc.BidiStreamingServer[EchoChatRequest, EchoChatResponse]
+
 // EchoService_ServiceDesc is the grpc.ServiceDesc for EchoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -121,6 +187,18 @@ var EchoService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EchoService_Echo_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "EchoStream",
+			Handler:       _EchoService_EchoStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "EchoChat",
+			Handler:       _EchoService_EchoChat_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "grpc/example/v1/echo.proto",
 }
