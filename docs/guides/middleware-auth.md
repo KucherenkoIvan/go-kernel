@@ -39,13 +39,14 @@ Token verification (JWT parsing, key management, sessions) is a per-project conc
 
 ## gRPC: custom interceptors
 
-`grpckit.NewServer` accepts custom interceptors that run **inside** the standard chain:
+`grpckit.NewServer` accepts custom interceptors that run **inside** the standard chain — `WithUnaryInterceptor` for unary RPCs, `WithStreamInterceptor` for streaming ones. The two chains are separate, so a concern that applies to every RPC is registered with both:
 
 ```go
 srv := grpckit.NewServer(
 	grpckit.WithLogger(logger),
 	grpckit.WithUnaryInterceptor(AuthInterceptor(verifier)),   // order preserved
 	grpckit.WithUnaryInterceptor(MetricsInterceptor(registry)),
+	grpckit.WithStreamInterceptor(StreamAuthInterceptor(verifier)),
 )
 ```
 
@@ -76,6 +77,36 @@ func AuthInterceptor(verifier TokenVerifier) grpc.UnaryServerInterceptor {
 ```
 
 gRPC has no route groups — exemptions and per-service policies are `info.FullMethod` checks (the generated `<Service>_<Method>_FullMethodName` constants keep this typo-safe).
+
+### Stream auth interceptor
+
+A stream interceptor can't pass a new context to the handler directly: it wraps the stream so that `Context()` returns one. The stream it receives already carries the request id, and the same guarantees hold (panics recovered, domain errors encoded into the status that ends the stream).
+
+```go
+func StreamAuthInterceptor(verifier TokenVerifier) grpc.StreamServerInterceptor {
+	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		if isExempt(info.FullMethod) {
+			return handler(srv, ss)
+		}
+		md, _ := metadata.FromIncomingContext(ss.Context())
+		principal, err := verifier.Verify(ss.Context(), bearerToken(md))
+		if err != nil {
+			return status.Error(codes.Unauthenticated, "unauthenticated")
+		}
+		return handler(srv, &principalStream{ServerStream: ss, ctx: auth.WithPrincipal(ss.Context(), principal)})
+	}
+}
+
+// principalStream is the stream with its Context replaced.
+type principalStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (s *principalStream) Context() context.Context { return s.ctx }
+```
+
+Authentication happens once, when the stream opens; a long-lived stream outlives its token unless the handler re-checks or the server ends the stream when the token expires.
 
 ## HTTP: Gin middleware
 
@@ -132,7 +163,7 @@ A request id set at the HTTP edge travels automatically: `httpapi` puts it in co
 
 The auth patterns above are exercised as tests, which double as reference implementations:
 
-- gRPC: [`grpckit/interceptor_ext_test.go`](../../grpckit/interceptor_ext_test.go) — token check, principal reaching the handler, domain error from an interceptor crossing the wire, panic recovery.
+- gRPC: [`grpckit/interceptor_ext_test.go`](../../grpckit/interceptor_ext_test.go) — token check, principal reaching the handler, domain error from an interceptor crossing the wire, panic recovery; [`grpckit/stream_test.go`](../../grpckit/stream_test.go) (`TestStreamInterceptor_AuthFlow`) — the same for a stream interceptor.
 - HTTP: [`httpapi/httpapi_test.go`](../../httpapi/httpapi_test.go) (`TestAuthMiddleware_Pattern`) — 401 without token, principal + role visible to the handler with one.
 
 ## Anti-patterns
@@ -142,6 +173,7 @@ The auth patterns above are exercised as tests, which double as reference implem
 | Use-case reads `auth.PrincipalFrom(ctx)` | Business logic depends on ambient transport state | Adapter extracts, passes `domain.UserID` as an argument |
 | Business authorization in middleware | "May the user edit *this* coupon" needs domain data | `PermissionGateway` port inside the use-case |
 | Identity in `gin.Context` keys (`c.Set/c.Get`) | Invisible to non-Gin code, ties adapters to Gin | `auth.WithPrincipal` on `c.Request.Context()` |
-| Custom gRPC interceptor placed outside the standard chain | Loses recovery/error-encoding guarantees | `grpckit.WithUnaryInterceptor` (always inside) |
+| Custom gRPC interceptor placed outside the standard chain | Loses recovery/error-encoding guarantees | `grpckit.WithUnaryInterceptor` / `WithStreamInterceptor` (always inside) |
+| gRPC auth registered only as a unary interceptor | Streaming RPCs bypass it and run unauthenticated | Register a stream variant with `WithStreamInterceptor` too |
 | Forwarding the caller's token to downstream services | Confused-deputy; each service must authenticate its own callers | Explicit identity fields in contracts |
 | Hand-rolled 401/403 JSON in middleware | Breaks the uniform error contract | `httpapi.Fail` + `Unauthorized`/`Forbidden` |

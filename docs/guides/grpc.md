@@ -122,7 +122,7 @@ func checkPrivateDir(dir string) error {
 }
 ```
 
-The directory decides who may connect at all. Per-caller authorization (which local user is calling) belongs in a [`WithUnaryInterceptor`](#custom-interceptors) that reads the peer's credentials (`SO_PEERCRED` on Linux, `LOCAL_PEERCRED` on macOS).
+The directory decides who may connect at all. Per-caller authorization (which local user is calling) belongs in a [custom interceptor](#custom-interceptors) (unary and stream) that reads the peer's credentials (`SO_PEERCRED` on Linux, `LOCAL_PEERCRED` on macOS).
 
 Clients dial with gRPC's built-in `unix` scheme. In `unix://` form the path must be absolute (`unix:///run/myapp/api.sock`); `unix:` + path takes a relative one:
 
@@ -156,6 +156,64 @@ defer conn.Close()
 gateway := grpcadapter.NewPermissionGateway(conn)
 ```
 
+## Streaming RPCs
+
+Server-streaming, client-streaming and bidirectional RPCs get the same standard chain as unary ones, on both sides: request id in `stream.Context()`, panics recovered, domain errors returned by the handler encoded into the status that ends the stream, everything else masked as `Internal`. On the client, `Recv` returns that status decoded, so a domain error arrives as a `*grpckit.RemoteDomainError`; a clean end is `io.EOF`.
+
+```go
+// server: return a domain error to end the stream with it
+func (c *FeedController) Watch(req *feedv1.WatchRequest, stream grpc.ServerStreamingServer[feedv1.Update]) error {
+	ctx := stream.Context() // request id, deadline, cancellation
+	...
+	return domain.ErrFeedClosed // client: RemoteDomainError{Code: "feed_closed"}
+}
+```
+
+```go
+// client
+stream, err := client.Watch(ctx, &feedv1.WatchRequest{})
+if err != nil {
+	return err
+}
+for {
+	update, err := stream.Recv()
+	if errors.Is(err, io.EOF) {
+		return nil // the server ended the stream
+	}
+	if err != nil {
+		return err // decoded: RemoteDomainError, or a status
+	}
+	apply(update)
+}
+```
+
+An RPC that ends because of its own context (the client cancelled, the deadline passed, the server closed the connection on shutdown) is routine for a stream: the chain logs it at debug and reports `Canceled`/`DeadlineExceeded` instead of a handler error when the handler returns `ctx.Err()` or the error of a `Send`/`Recv` that failed because of it.
+
+### Long-lived streams and shutdown
+
+`Serve`'s graceful stop stops accepting new RPCs and waits for the open ones; a push stream never finishes by itself, so it holds the shutdown for the whole 10s grace period, after which its connection is closed and `stream.Context()` cancelled. A handler that only watches `stream.Context()` is therefore correct, but slow to shut down. To end promptly, also watch the service's ctx (the one `Serve` gets) and end the stream when it is cancelled; the client sees `io.EOF` and reconnects:
+
+```go
+// FeedController.shutdown is the ctx passed to grpckit.Serve, set in main.
+func (c *FeedController) Watch(req *feedv1.WatchRequest, stream grpc.ServerStreamingServer[feedv1.Update]) error {
+	updates := c.feed.Subscribe(stream.Context())
+	for {
+		select {
+		case <-stream.Context().Done(): // client gone, or the grace period ran out
+			return stream.Context().Err()
+		case <-c.shutdown.Done(): // shutting down: end the stream, don't wait out the grace period
+			return nil
+		case u := <-updates:
+			if err := stream.Send(u); err != nil {
+				return err
+			}
+		}
+	}
+}
+```
+
+`Send` is not safe for concurrent use: one goroutine sends on a stream (and one receives), as above.
+
 ## Error mapping
 
 The server interceptor guarantees clients see exactly two kinds of failures:
@@ -164,6 +222,7 @@ The server interceptor guarantees clients see exactly two kinds of failures:
 |---|---|
 | ddd domain error (`ddd.IsDomainError`) | status `FailedPrecondition` (or the `WithErrorCode` mapping) + `ErrorInfo` detail with the code |
 | any other error, or a panic | status `Internal` with the message `"internal error"` — internals are logged server-side, never sent |
+| any error once the RPC's own context has ended (cancel, deadline, connection closed) | status `Canceled` / `DeadlineExceeded`, logged at debug — usually no client is left to receive it |
 
 On the client, the interceptor restores domain errors as `*grpckit.RemoteDomainError` — `ddd.IsDomainError` keeps working **across the service boundary**, and callers branch on the code:
 
@@ -178,12 +237,13 @@ if errors.As(err, &remote) && remote.Code == "coupon_exhausted" {
 
 ## Custom interceptors
 
-Auth, rate limiting, metrics — appended via `WithUnaryInterceptor`, always running *inside* the standard chain, which means: panics recovered, request id already in context, and domain errors returned by an interceptor encoded like handler errors.
+Auth, rate limiting, metrics — appended via `WithUnaryInterceptor` and `WithStreamInterceptor`, always running *inside* the standard chain, which means: panics recovered, request id already in context, and domain errors returned by an interceptor encoded like handler errors. The two chains are separate: a concern that applies to every RPC is registered with both, or streams bypass it.
 
 ```go
 srv := grpckit.NewServer(
 	grpckit.WithLogger(logger),
 	grpckit.WithUnaryInterceptor(AuthInterceptor(verifier)),
+	grpckit.WithStreamInterceptor(StreamAuthInterceptor(verifier)),
 )
 ```
 
@@ -195,7 +255,7 @@ Every handler runs with a request id in context (`grpckit.RequestID(ctx)`) — t
 
 ## Testing
 
-In-process round-trip over `bufconn`, no network — see [`grpckit/grpckit_test.go`](../../grpckit/grpckit_test.go) for the full pattern:
+In-process round-trip over `bufconn`, no network — see [`grpckit/grpckit_test.go`](../../grpckit/grpckit_test.go) for the full pattern, and [`grpckit/stream_test.go`](../../grpckit/stream_test.go) for server-streaming and bidi RPCs, including a long-lived stream across `Serve`'s shutdown:
 
 ```go
 lis := bufconn.Listen(1 << 20)
@@ -211,7 +271,6 @@ conn, _ := grpckit.Connect("passthrough:///bufnet",
 
 ## Limitations (deliberate, for now)
 
-- Unary RPCs only — the interceptor chain has no streaming variants yet; add them when a contract actually needs streams.
 - Plaintext transport — services are assumed to talk inside a private network; TLS becomes a `Connect` option when a deployment needs it.
 
 ## Anti-patterns
@@ -226,6 +285,10 @@ conn, _ := grpckit.Connect("passthrough:///bufnet",
 | `os.Chmod` on a Unix socket after `net.Listen` | Restrict the parent directory before listening |
 | Socket directly in `/run` or `/tmp`, or chmod of a directory you didn't create | A directory of the app's own: create it 0750, or verify owner and mode of an existing one |
 | Handler that ignores ctx cancellation | Return when `ctx.Done()` fires: shutdown waits for every handler, even after the 10s grace period |
+| Push stream that only watches `stream.Context()` | Also watch the service's ctx and end the stream on shutdown, or every shutdown waits out the grace period |
+| Auth (or any every-RPC concern) registered only with `WithUnaryInterceptor` | Register it with `WithStreamInterceptor` too; streams bypass the unary chain |
+| `stream.Send` from several goroutines | One sending goroutine per stream; fan in through a channel |
+| Treating `io.EOF` from `Recv` as an error | It is the clean end of the stream; any failure is a non-EOF error |
 | Opening the listener in `main` and passing it into an adapter | Open it inside the adapter's `Run`, so a listen failure is the adapter's error |
 | Deleting a socket file unconditionally before `Listen` | Dial first; remove only on `ECONNREFUSED` |
 | Breaking changes to a published `v1` proto | New version directory (`v2`) |
