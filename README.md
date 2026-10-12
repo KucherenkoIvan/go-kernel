@@ -36,7 +36,7 @@ Each guide links its package's readme; each package readme links back.
 - [ddd](docs/guides/ddd.md) — the base building blocks: aggregates' event recorder, typed events, the transaction port/token, determinism ports, domain-error marker (+ `dddtest` fakes)
 - [service runtime](docs/guides/service-runtime.md) — how `main.go` composes; the assembly view of the four below
   - [app](docs/guides/app.md) — lifecycle: concurrent adapters, shutdown on signal or first failure, reverse-order cleanup
-  - [config](docs/guides/config.md) — typed env config with `.env`/`.env.local`, defaults, required-field validation
+  - [config](docs/guides/config.md) — typed env config with `.env`/`.env.local`, defaults, required-field validation, flags bound from the same struct
   - [observability](docs/guides/observability.md) — the service logger (slog, env-configured); metrics/tracing land here later
   - [health](docs/guides/health.md) — self-diagnosing checks: deep `/healthz` with per-dependency details, dumb `/livez`, gRPC aggregate
 - [postgres](docs/guides/postgres.md) — pgx pool as the TxManager: token/`Resolve`, `AfterCommit` hooks, migration runner
