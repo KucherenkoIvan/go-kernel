@@ -269,3 +269,70 @@ func TestLoadWith_WithEnvFiles(t *testing.T) {
 		t.Fatalf("got %+v, %v", cfg, err)
 	}
 }
+
+type secretConfig struct {
+	Token string `env:"SCFG_TOKEN" flag:"token" secret:"true" help:"api token"`
+	Plain string `env:"SCFG_PLAIN" flag:"plain"`
+}
+
+func TestBindFlags_SecretHidesLoadedValue(t *testing.T) {
+	t.Setenv("SCFG_TOKEN", "s3cr3t")
+	t.Setenv("SCFG_PLAIN", "visible")
+	cfg, err := config.LoadWith[secretConfig](config.WithoutEnvFiles())
+	if err != nil {
+		t.Fatal(err)
+	}
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	if err := config.BindFlags(fs, cfg); err != nil {
+		t.Fatal(err)
+	}
+	var buf strings.Builder
+	fs.SetOutput(&buf)
+	fs.PrintDefaults()
+	if strings.Contains(buf.String(), "s3cr3t") || fs.Lookup("token").DefValue != "" {
+		t.Fatalf("a secret flag must not print its loaded value:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "(default visible)") {
+		t.Fatalf("a plain flag still prints its default:\n%s", buf.String())
+	}
+
+	// hidden from usage, but the value itself is untouched and still settable
+	if cfg.Token != "s3cr3t" {
+		t.Fatalf("Token = %q", cfg.Token)
+	}
+	if err := fs.Parse([]string{"-token", "other"}); err != nil || cfg.Token != "other" {
+		t.Fatalf("Token = %q, %v", cfg.Token, err)
+	}
+}
+
+type modeListConfig struct {
+	Modes []mode `env:"MCFG_MODES" default:"a,b" flag:"modes"`
+}
+
+func TestSliceOfNamedStrings(t *testing.T) {
+	t.Setenv("MCFG_MODES", "x, y")
+	cfg, err := config.LoadWith[modeListConfig](config.WithoutEnvFiles())
+	if err != nil || len(cfg.Modes) != 2 || cfg.Modes[0] != "x" || cfg.Modes[1] != "y" {
+		t.Fatalf("env: got %+v, %v", cfg, err)
+	}
+
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	if err := config.BindFlags(fs, cfg); err != nil {
+		t.Fatal(err)
+	}
+	if got := fs.Lookup("modes").DefValue; got != "x,y" {
+		t.Fatalf("DefValue = %q", got)
+	}
+	if err := fs.Parse([]string{"-modes", "p,q,r"}); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Modes) != 3 || cfg.Modes[2] != "r" {
+		t.Fatalf("flag: got %+v", cfg.Modes)
+	}
+}
+
+func TestValidate_NilIsNil(t *testing.T) {
+	if err := config.Validate[deferredConfig](nil); err != nil {
+		t.Fatal(err)
+	}
+}

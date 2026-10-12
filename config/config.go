@@ -129,8 +129,12 @@ func MustLoadWith[T any](opts ...Option) *T {
 }
 
 // Validate runs cfg's `func (*T) Validate() error` hook, if it has one — the
-// second half of a DeferValidate load, called after flags are parsed.
+// second half of a DeferValidate load, called after flags are parsed. A nil
+// cfg has nothing to validate.
 func Validate[T any](cfg *T) error {
+	if cfg == nil {
+		return nil
+	}
 	if v, ok := any(cfg).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return fmt.Errorf("config: validation: %w", err)
@@ -208,14 +212,16 @@ func setValue(v reflect.Value, raw string) error {
 		if v.Type().Elem().Kind() != reflect.String {
 			return fmt.Errorf("unsupported slice type %s", v.Type())
 		}
-		parts := strings.Split(raw, ",")
-		out := make([]string, 0, len(parts))
-		for _, p := range parts {
+		// element-wise, so named slice and named element types both work
+		out := reflect.MakeSlice(v.Type(), 0, strings.Count(raw, ",")+1)
+		for _, p := range strings.Split(raw, ",") {
 			if p = strings.TrimSpace(p); p != "" {
-				out = append(out, p)
+				elem := reflect.New(v.Type().Elem()).Elem()
+				elem.SetString(p)
+				out = reflect.Append(out, elem)
 			}
 		}
-		v.Set(reflect.ValueOf(out).Convert(v.Type())) // named []string types too
+		v.Set(out)
 	default:
 		return fmt.Errorf("unsupported field type %s", v.Type())
 	}

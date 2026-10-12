@@ -16,6 +16,9 @@ import (
 // LoadWith and a flag left unset keeps the environment's value, while a flag
 // that is set wins over it. The usage line is the optional `help:"..."` tag
 // followed by the field's env var, e.g. "listen address (env HTTP_ADDR)".
+// A field tagged `secret:"true"` keeps its loaded value out of the usage
+// output (no "(default ...)"); better still, keep secrets off flags entirely,
+// since argv is visible to other users through ps.
 //
 // Supported field types are the env types: string, bool, ints, floats,
 // time.Duration and []string (comma-separated; a flag replaces the whole
@@ -56,10 +59,14 @@ func BindFlags[T any](fs *flag.FlagSet, cfg *T) error {
 	}
 
 	for _, b := range binds {
+		var fv flag.Value = &fieldValue{v: b.value}
+		zero := "" // what the flag package treats as "no default to print"
 		if b.value.Kind() == reflect.Bool {
-			fs.Var(&boolFieldValue{fieldValue{v: b.value}}, b.name, b.usage)
-		} else {
-			fs.Var(&fieldValue{v: b.value}, b.name, b.usage)
+			fv, zero = &boolFieldValue{fieldValue{v: b.value}}, "false"
+		}
+		fs.Var(fv, b.name, b.usage)
+		if b.secret { // the loaded value must not reach -h output
+			fs.Lookup(b.name).DefValue = zero
 		}
 	}
 	return nil
@@ -67,6 +74,7 @@ func BindFlags[T any](fs *flag.FlagSet, cfg *T) error {
 
 type flagBinding struct {
 	name, usage, path string
+	secret            bool
 	value             reflect.Value
 }
 
@@ -101,7 +109,10 @@ func collectFlags(v reflect.Value, prefix string, binds *[]flagBinding, errs *[]
 				usage += " (env " + env + ")"
 			}
 		}
-		*binds = append(*binds, flagBinding{name: name, usage: usage, path: path, value: value})
+		*binds = append(*binds, flagBinding{
+			name: name, usage: usage, path: path, value: value,
+			secret: field.Tag.Get("secret") == "true",
+		})
 	}
 }
 
