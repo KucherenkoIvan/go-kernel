@@ -20,7 +20,7 @@ type AppConfig struct {
 }
 ```
 
-Supported types: `string` (and named string types), `bool`, all int sizes, `float32`/`float64`, `time.Duration`, `[]string`. A field without an `env` tag is ignored (nested structs recurse).
+Supported types: `string` (and named string types), `bool`, all int sizes, `float32`/`float64`, `time.Duration`, `[]string` (and slices of named string types). A field without an `env` tag is ignored (nested structs recurse).
 
 | Tag | Meaning |
 |---|---|
@@ -29,6 +29,7 @@ Supported types: `string` (and named string types), `bool`, all int sizes, `floa
 | `required:"true"` | unset is an error; every missing one is reported at once |
 | `flag:"name"` | `BindFlags` registers `-name` for the field |
 | `help:"..."` | the flag's description; the env var is appended: `listen address (env HTTP_ADDR)` |
+| `secret:"true"` | the flag's usage shows no `(default ...)`, so `-h` never prints the loaded value |
 
 ## Loading
 
@@ -103,8 +104,9 @@ $ serve -h
 ```
 
 - **Bind after loading.** A flag's default is the field's value at bind time — the env value, or the `default:` tag — so an unset flag keeps it and a set flag wins.
-- **`DeferValidate` + `Validate(cfg)`.** `LoadWith` normally runs `Validate()` right away, before any flag is parsed; deferring it lets the hook see the final values. `Validate` is a no-op for types without the hook.
+- **`DeferValidate` + `Validate(cfg)`.** `LoadWith` normally runs `Validate()` right away, before any flag is parsed; deferring it lets the hook see the final values. `Validate` is a no-op for types without the hook, and for a nil config.
 - **`required:` is an environment check.** It runs at load time, before flags exist. A value that may come from either side (like `-db` above) leaves `required` off and is checked in `Validate()`.
+- **Keep secrets off flags.** A flag's default is the loaded value, so `-h` would print a token read from the environment, and anything passed on the command line is visible to every local user through `ps`. Secrets stay `env:`-only. If a secret field must have a flag anyway, tag it `secret:"true"`: `-h` then shows no default (the value on the command line is still visible in `ps`).
 - Bool flags take `-debug` / `-debug=false`; `[]string` flags take one comma-separated value that replaces the list.
 - `BindFlags` returns an error — never panics — for duplicate `flag:` names, a name already defined on the `FlagSet`, a malformed name, or an unsupported field type; on error no flag is registered.
 
@@ -148,3 +150,4 @@ func TestLoad(t *testing.T) {
 | Repeating env names as flag names by hand (`fs.StringVar(&cfg.Addr, "addr", cfg.Addr, "... (HTTP_ADDR)")` per field) | `flag:` / `help:` tags + `BindFlags` — names, defaults and parsing live in one place |
 | Validating before flags are parsed, then again after | `DeferValidate()` at load, one `config.Validate(cfg)` after `fs.Parse` |
 | Pointing `Load` at `os.DevNull` to skip `.env` files | `LoadWith[T](config.WithoutEnvFiles())` |
+| `flag:` on a secret field (`-h` prints the env-loaded token as the default; argv shows in `ps`) | Secrets are `env:`-only; if a flag is unavoidable, `secret:"true"` keeps the value out of `-h` |

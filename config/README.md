@@ -6,8 +6,10 @@ Typed configuration from environment variables, with `.env`-file support for dev
 - `LoadWith[T](opts...)` / `MustLoadWith[T]` — the same with options: `WithEnvFiles(paths...)`, `WithoutEnvFiles()`, `DeferValidate()`
 - `BindFlags(fs, cfg)` — one `flag.FlagSet` flag per `flag:"name"` field; the flag's default is the loaded value, its usage names the env var
 - `Validate(cfg)` — run the `Validate()` hook yourself, after flags are parsed (with `DeferValidate`)
-- Tags: `env:"NAME"`, `default:"..."`, `required:"true"`, `flag:"name"`, `help:"..."` — all missing required vars reported at once
-- Types: string, bool, ints, floats, `time.Duration`, `[]string`; nested structs group sections
+- Tags: `env:"NAME"`, `default:"..."`, `required:"true"`, `flag:"name"`, `help:"..."`, `secret:"true"` (no default in `-h`) — all missing required vars reported at once
+- Types: string, bool, ints, floats, `time.Duration`, `[]string` (named string and slice types too); nested structs group sections
+- Secrets stay `env:`-only: a flag's default would print them in `-h`, and argv is visible in `ps`
+- `required:` checks the environment at load time; a value that may come from a flag is checked in `Validate()` instead
 - Precedence: **flags > OS env > `.env.local` > `.env` > `default:`** — files never override real env
 - Optional `Validate() error` method for cross-field rules
 
