@@ -10,9 +10,10 @@
 //
 //	cfg := config.MustLoad[AppConfig]()
 //
-// Precedence: OS environment > .env.local > .env — files never override real
-// environment variables, so production stays file-proof. Config is loaded
-// once in main() and passed down as a value; it is never a global.
+// Precedence: flags (BindFlags) > OS environment > .env.local > .env >
+// default tag — files never override real environment variables, so
+// production stays file-proof. Config is loaded once in main() and passed
+// down as a value; it is never a global.
 package config
 
 import (
@@ -26,17 +27,64 @@ import (
 	"time"
 )
 
+// Option configures LoadWith.
+type Option func(*loadOptions)
+
+type loadOptions struct {
+	envFiles      []string
+	deferValidate bool
+}
+
+// WithEnvFiles sets the .env files to read, earliest wins; missing files are
+// fine. It replaces the default [".env.local", ".env"] list; with no paths no
+// file is read, like WithoutEnvFiles.
+func WithEnvFiles(paths ...string) Option {
+	return func(o *loadOptions) { o.envFiles = append([]string{}, paths...) }
+}
+
+// WithoutEnvFiles reads the OS environment only — for daemons, whose working
+// directory may hold a stranger's .env.
+func WithoutEnvFiles() Option {
+	return func(o *loadOptions) { o.envFiles = []string{} }
+}
+
+// DeferValidate skips the Validate hook in LoadWith; the caller runs
+// Validate(cfg) itself once every source (flags, see BindFlags) has been
+// applied. Missing required variables are still reported by LoadWith.
+func DeferValidate() Option {
+	return func(o *loadOptions) { o.deferValidate = true }
+}
+
 // Load populates T from the environment. envFiles defaults to
 // [".env.local", ".env"]; earlier files win. Missing files are fine.
 // After population, a `func (*T) Validate() error` method, if present, is
 // called for cross-field rules.
 func Load[T any](envFiles ...string) (*T, error) {
 	if len(envFiles) == 0 {
-		envFiles = []string{".env.local", ".env"}
+		return LoadWith[T]()
+	}
+	return LoadWith[T](WithEnvFiles(envFiles...))
+}
+
+// MustLoad is Load that panics on error — for use in main().
+func MustLoad[T any](envFiles ...string) *T {
+	cfg, err := Load[T](envFiles...)
+	if err != nil {
+		panic(err)
+	}
+	return cfg
+}
+
+// LoadWith is Load configured by options. With none it reads
+// [".env.local", ".env"] and runs the Validate hook, exactly like Load().
+func LoadWith[T any](opts ...Option) (*T, error) {
+	o := loadOptions{envFiles: []string{".env.local", ".env"}}
+	for _, opt := range opts {
+		opt(&o)
 	}
 
 	fileVars := map[string]string{}
-	for _, path := range envFiles {
+	for _, path := range o.envFiles {
 		vars, err := parseEnvFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("config: %w", err)
@@ -63,21 +111,32 @@ func Load[T any](envFiles ...string) (*T, error) {
 		return nil, fmt.Errorf("config: %w", errors.Join(errs...))
 	}
 
-	if v, ok := any(&cfg).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return nil, fmt.Errorf("config: validation: %w", err)
+	if !o.deferValidate {
+		if err := Validate(&cfg); err != nil {
+			return nil, err
 		}
 	}
 	return &cfg, nil
 }
 
-// MustLoad is Load that panics on error — for use in main().
-func MustLoad[T any](envFiles ...string) *T {
-	cfg, err := Load[T](envFiles...)
+// MustLoadWith is LoadWith that panics on error — for use in main().
+func MustLoadWith[T any](opts ...Option) *T {
+	cfg, err := LoadWith[T](opts...)
 	if err != nil {
 		panic(err)
 	}
 	return cfg
+}
+
+// Validate runs cfg's `func (*T) Validate() error` hook, if it has one — the
+// second half of a DeferValidate load, called after flags are parsed.
+func Validate[T any](cfg *T) error {
+	if v, ok := any(cfg).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return fmt.Errorf("config: validation: %w", err)
+		}
+	}
+	return nil
 }
 
 func populate(v reflect.Value, lookup func(string) (string, bool), errs *[]error) {
@@ -156,7 +215,7 @@ func setValue(v reflect.Value, raw string) error {
 				out = append(out, p)
 			}
 		}
-		v.Set(reflect.ValueOf(out))
+		v.Set(reflect.ValueOf(out).Convert(v.Type())) // named []string types too
 	default:
 		return fmt.Errorf("unsupported field type %s", v.Type())
 	}

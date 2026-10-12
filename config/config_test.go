@@ -111,3 +111,15 @@ func TestLoad_BadValue(t *testing.T) {
 func contains(err error, substr string) bool {
 	return err != nil && strings.Contains(err.Error(), substr)
 }
+
+type namedList []string
+
+func TestLoad_NamedSliceType(t *testing.T) {
+	t.Setenv("TCFG_NAMED", "a, b")
+	cfg, err := config.Load[struct {
+		List namedList `env:"TCFG_NAMED"`
+	}]("/nonexistent/.env")
+	if err != nil || len(cfg.List) != 2 || cfg.List[1] != "b" {
+		t.Fatalf("got %+v, %v", cfg, err)
+	}
+}
