@@ -37,7 +37,7 @@ Each guide links its package's readme; each package readme links back.
 - [service runtime](docs/guides/service-runtime.md) — how `main.go` composes; the assembly view of the four below
   - [app](docs/guides/app.md) — lifecycle: concurrent adapters, shutdown on signal or first failure, reverse-order cleanup
   - [config](docs/guides/config.md) — typed env config with `.env`/`.env.local`, defaults, required-field validation
-  - [observability](docs/guides/observability.md) — the service logger (slog, env-configured); metrics/tracing land here later
+  - [observability](docs/guides/observability.md) — the service logger (slog, env-configured or with an explicit writer/level/format); metrics/tracing land here later
   - [health](docs/guides/health.md) — self-diagnosing checks: deep `/healthz` with per-dependency details, dumb `/livez`, gRPC aggregate
 - [postgres](docs/guides/postgres.md) — pgx pool as the TxManager: token/`Resolve`, `AfterCommit` hooks, migration runner
 - [sqlite](docs/guides/sqlite.md) — the embedded twin for single-binary deployments (modernc, no cgo/container)

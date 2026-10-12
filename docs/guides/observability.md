@@ -20,6 +20,40 @@ Environment-driven, no config struct needed:
 
 Every line carries `service=<name>`. `slog.SetDefault` matters: kernel packages (`app`, `events`, `grpckit`, `httpapi`, ...) default to `slog.Default()`, so one call routes everything — pass the logger explicitly (`WithLogger(...)` options) only when a component needs a different one.
 
+## Choosing the destination, level and format
+
+`NewLogger` is stdout and the two environment variables — right for a container whose stdout is collected. A process with its own log destinations (a daemon writing to stderr and to an in-process sink, a CLI that keeps stdout for its output) builds the logger with `NewLoggerWith`:
+
+```go
+type Options struct {
+	Writer io.Writer    // nil: os.Stdout
+	Level  slog.Leveler // nil: LOG_LEVEL (default info)
+	Format string       // "json" | "text", case-insensitive; "": LOG_FORMAT (default json)
+}
+```
+
+```go
+var level slog.LevelVar
+level.Set(cfg.LogLevel) // a slog.Level from the daemon's own config
+
+logger, err := observability.NewLoggerWith("mydaemon", observability.Options{
+	Writer: io.MultiWriter(os.Stderr, recentLines), // recentLines: any io.Writer the caller owns
+	Level:  &level,                                  // later level.Set(...) changes it live
+	Format: "text",
+})
+if err != nil {
+	return err // only an unknown Format fails
+}
+slog.SetDefault(logger)
+```
+
+- **Each zero field keeps `NewLogger`'s behavior**, so `NewLoggerWith(name, Options{})` is exactly `NewLogger(name)`.
+- **An explicit `Level` ignores `LOG_LEVEL` entirely.** A privileged daemon shouldn't take its verbosity from whatever environment it was started in; a `*slog.LevelVar` lets it change the level at runtime instead.
+- **`Format` is checked; the environment is not.** An unknown `Options.Format` is an error (it came from the caller's config and should fail the start); an unknown `LOG_FORMAT` or `LOG_LEVEL` keeps falling back to json/info, as before.
+- The kernel brings no sinks: a ring buffer, a file, a socket are the caller's `io.Writer`. slog's handlers serialize the writes of one logger and the loggers derived from it with `With`, so the writer needs locking of its own only if something else writes to it too.
+
+To parse a level from a config string, `slog.Level` implements `encoding.TextUnmarshaler` (`"debug"`, `"INFO"`, `"warn+2"`).
+
 ## Conventions
 
 - **Log with context.** Include the request id: `logger.With("requestId", requestid.From(ctx))`. The kernel's transport chains already do this for their own lines.
@@ -49,3 +83,5 @@ Metrics (Prometheus registry + the counters the outbox/relay/consumers should ex
 | PII / tokens / payloads in log lines | Ids and codes, never contents |
 | Per-package logger globals | `slog.Default()` set once in main; explicit `WithLogger` for exceptions |
 | `debug` in production "temporarily" | `LOG_LEVEL` is env config — flip it per environment, not in code |
+| Hand-building a `slog.JSONHandler` in main to log somewhere other than stdout (and losing the `service` attribute) | `NewLoggerWith(service, Options{Writer: ...})` |
+| A daemon whose verbosity is whatever `LOG_LEVEL` its environment carries | An explicit `Options.Level` (a `*slog.LevelVar` to change it live) |
