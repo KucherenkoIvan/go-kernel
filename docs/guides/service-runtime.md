@@ -4,7 +4,7 @@ The four packages every `main.go` is built from, and how they compose. Each has 
 
 | Package | Job | Guide |
 |---|---|---|
-| [`app`](../../app/README.md) | lifecycle: concurrent adapters, shutdown on signal/failure, reverse-order cleanup | [app.md](./app.md) |
+| [`app`](../../app/README.md) | lifecycle: concurrent adapters, shutdown on signal/failure (second signal force-quits), reverse-order cleanup | [app.md](./app.md) |
 | [`config`](../../config/README.md) | typed env config, `.env`/`.env.local`, defaults + required + validation | [config.md](./config.md) |
 | [`observability`](../../observability/README.md) | the service logger (slog, env-configured); metrics/tracing land here later | [observability.md](./observability.md) |
 | [`health`](../../health/README.md) | self-diagnosing checks: deep `/healthz`, dumb `/livez`, gRPC aggregate | [health.md](./health.md) |
