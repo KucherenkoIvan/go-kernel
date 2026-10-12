@@ -6,7 +6,7 @@ The four packages every `main.go` is built from, and how they compose. Each has 
 |---|---|---|
 | [`app`](../../app/README.md) | lifecycle: concurrent adapters, shutdown on signal/failure (second signal force-quits), reverse-order cleanup | [app.md](./app.md) |
 | [`config`](../../config/README.md) | typed env config, `.env`/`.env.local`, defaults + required + validation, optional flag binding | [config.md](./config.md) |
-| [`observability`](../../observability/README.md) | the service logger (slog, env-configured); metrics/tracing land here later | [observability.md](./observability.md) |
+| [`observability`](../../observability/README.md) | the service logger (slog, env-configured or explicit options); metrics/tracing land here later | [observability.md](./observability.md) |
 | [`health`](../../health/README.md) | self-diagnosing checks: deep `/healthz`, dumb `/livez`, gRPC aggregate | [health.md](./health.md) |
 
 These four are `main()`'s concern only — features never import them.
