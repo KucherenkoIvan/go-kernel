@@ -37,6 +37,28 @@ err := app.Run(ctx, adapters...)
 
 A `Run` that returns nil early (a one-shot task) does not stop the service — only errors and signals do.
 
+## Two-stage shutdown: the second signal kills
+
+The first SIGINT/SIGTERM is `app.Run`'s: it logs `shutting down; signal again to force quit` and starts the graceful shutdown above. From then on the signal handler is released, so the **next** SIGINT/SIGTERM gets the signal's default action — the process dies at once, `Close` or no `Close`. An operator facing a shutdown that hangs (a `Close` that ignores its context, a stuck network teardown) presses Ctrl-C again instead of reaching for `kill -9`.
+
+The handler is released whenever shutdown begins, not only on a signal: after an adapter failure or a parent-ctx cancellation, the **first** SIGINT/SIGTERM already force-quits. There is nothing left for a signal to start gracefully at that point — swallowing it would only take away the way out of a hung `Close`. The 15s close budget still applies to every `Close` that honors its context.
+
+Two consequences of using the default action:
+
+- If the program has its own `signal.Notify` (or `signal.NotifyContext`) for SIGINT/SIGTERM, later signals go to that handler instead of killing the process — the program owns them then.
+- A process started with SIGINT ignored (a background job of a non-interactive shell) goes back to ignoring it once released; SIGTERM still force-quits.
+
+## Logger
+
+`Run` logs adapter started/stopped/closed and the first signal through `slog.Default()`. A process that keeps its logger out of the global default injects it with `RunWith`:
+
+```go
+logger := slog.New(slog.NewTextHandler(os.Stderr, nil)).With("component", "mydaemon")
+err := app.RunWith(ctx, app.Options{Logger: logger}, adapters...)
+```
+
+`Run(ctx, adapters...)` is `RunWith(ctx, app.Options{}, adapters...)`; a nil `Logger` means `slog.Default()`, read when `RunWith` starts.
+
 ## Registration order is dependency order
 
 Register dependencies before dependents; reverse-order `Close` then releases dependents first:
@@ -51,7 +73,7 @@ Getting this wrong is silent until shutdown: an event publisher registered *afte
 
 ## Testing
 
-Adapters are plain functions, so lifecycle logic is unit-testable — see [`app/app_test.go`](../../app/app_test.go) for the patterns (error propagation, reverse close order, graceful cancel).
+Adapters are plain functions, so lifecycle logic is unit-testable — see [`app/app_test.go`](../../app/app_test.go) for the patterns (error propagation, reverse close order, graceful cancel, the injected logger). Real signals are tested in [`app/signal_test.go`](../../app/signal_test.go): a second signal would kill the test binary, so the test re-executes itself as a subprocess and asserts on its exit status.
 
 ## Anti-patterns
 
@@ -62,3 +84,5 @@ Adapters are plain functions, so lifecycle logic is unit-testable — see [`app/
 | Resources closed by defer in main *and* an adapter Close | One owner: the adapter |
 | Publisher/relay registered after the servers | Dependencies first — reverse close does the rest |
 | Ignoring the returned error | It carries both run and close failures — log and exit non-zero |
+| Extra `signal.Notify` in main "to be safe" around `app.Run` | `app.Run` owns SIGINT/SIGTERM; a second handler swallows the force-quit signal |
+| `slog.SetDefault` only to route `app`'s lines to a custom logger | `app.RunWith(ctx, app.Options{Logger: logger}, ...)` |

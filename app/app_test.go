@@ -1,8 +1,11 @@
 package app_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -90,5 +93,51 @@ func TestRun_CloseErrorsAreReported(t *testing.T) {
 	)
 	if !errors.Is(err, closeErr) {
 		t.Fatalf("close error not reported: %v", err)
+	}
+}
+
+func TestRunWith_InjectedLogger(t *testing.T) {
+	var defaultOut, injectedOut bytes.Buffer
+	orig := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&defaultOut, nil)))
+	t.Cleanup(func() { slog.SetDefault(orig) })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	o := &order{}
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		cancel()
+	}()
+	err := app.RunWith(ctx, app.Options{Logger: slog.New(slog.NewTextHandler(&injectedOut, nil))},
+		app.Adapter{Name: "worker", Run: blockUntilCancel(o, "worker"), Close: closer(o, "worker")},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, want := range []string{"adapter started", "adapter stopped", "adapter closed"} {
+		if !strings.Contains(injectedOut.String(), want) {
+			t.Errorf("injected logger misses %q:\n%s", want, injectedOut.String())
+		}
+	}
+	if defaultOut.Len() != 0 {
+		t.Errorf("slog.Default() must stay silent with an injected logger, got:\n%s", defaultOut.String())
+	}
+}
+
+func TestRunWith_NilLoggerIsDefault(t *testing.T) {
+	var defaultOut bytes.Buffer
+	orig := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&defaultOut, nil)))
+	t.Cleanup(func() { slog.SetDefault(orig) })
+
+	err := app.RunWith(context.Background(), app.Options{},
+		app.Adapter{Name: "oneshot", Run: func(context.Context) error { return nil }},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(defaultOut.String(), "adapter stopped") {
+		t.Fatalf("nil Logger must log through slog.Default(), got:\n%s", defaultOut.String())
 	}
 }

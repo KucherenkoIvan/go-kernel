@@ -4,6 +4,8 @@ Service lifecycle: run all adapters concurrently, shut down on SIGINT/SIGTERM or
 
 - `Adapter{Name, Run, Close}` — anything the service runs or owns; both fields optional (servers are Run-only, resources like the DB pool are Close-only)
 - `Run(ctx, adapters...)` — blocks until shutdown; joins run and close errors; nil on a clean stop
+- `RunWith(ctx, Options{Logger}, adapters...)` — `Run` with an injected `*slog.Logger` for the lifecycle lines (nil: `slog.Default()`)
+- Two-stage shutdown: the first SIGINT/SIGTERM starts the graceful shutdown; once shutdown has begun (signal, ctx or adapter failure) the next one kills the process — the way out of a hung `Close`
 
 ```go
 err := app.Run(ctx,

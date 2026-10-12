@@ -33,10 +33,22 @@ type Adapter struct {
 // closeTimeout bounds the total cleanup phase.
 const closeTimeout = 15 * time.Second
 
+// Options configures RunWith. The zero value is Run's behavior.
+type Options struct {
+	// Logger receives the lifecycle lines (adapter started/stopped/closed,
+	// the shutdown signal); nil is slog.Default().
+	Logger *slog.Logger
+}
+
 // Run starts all adapters and blocks until SIGINT/SIGTERM, ctx cancellation,
 // or the first Run error — then waits for every Run to return and calls
 // Close in reverse registration order. Returns the joined run and close
 // errors; nil on a clean shutdown.
+//
+// Shutdown is two-stage: once it has begun, for any of those reasons, the
+// signal handler is released, so the next SIGINT/SIGTERM terminates the
+// process with the signal's default action — the way out of a Run or Close
+// that hangs. See RunWith for the logger option.
 //
 //	err := app.Run(ctx,
 //		app.Adapter{Name: "postgres", Close: func(context.Context) error { db.Close(); return nil }},
@@ -45,12 +57,40 @@ const closeTimeout = 15 * time.Second
 //		app.Adapter{Name: "grpc", Run: func(ctx context.Context) error { return grpckit.Run(ctx, srv, cfg.GRPCAddr) }},
 //	)
 func Run(ctx context.Context, adapters ...Adapter) error {
-	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	return RunWith(ctx, Options{}, adapters...)
+}
 
-	logger := slog.Default()
+// RunWith is Run configured by opts.
+func RunWith(ctx context.Context, opts Options, adapters ...Adapter) error {
+	logger := opts.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	// Only the first signal is ours. signal.Stop restores the default action
+	// unless the program registered its own handler for the signal, in which
+	// case later signals go there.
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigs)
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	g, gctx := errgroup.WithContext(ctx)
+	// shutdown begun by ctx or an adapter failure releases the handler too
+	releaseOnShutdown := context.AfterFunc(gctx, func() { signal.Stop(sigs) })
+	defer releaseOnShutdown()
+	go func() {
+		select {
+		case sig := <-sigs:
+			signal.Stop(sigs)
+			logger.Info("shutting down; signal again to force quit", "signal", sig.String())
+			cancel()
+		case <-gctx.Done():
+		}
+	}()
+
 	for _, a := range adapters {
 		if a.Run == nil {
 			continue
@@ -65,9 +105,10 @@ func Run(ctx context.Context, adapters ...Adapter) error {
 		})
 	}
 	runErr := g.Wait()
+	signal.Stop(sigs) // released before any Close, whatever ended the Run phase
 
-	closeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), closeTimeout)
-	defer cancel()
+	closeCtx, cancelClose := context.WithTimeout(context.WithoutCancel(ctx), closeTimeout)
+	defer cancelClose()
 	errs := []error{runErr}
 	for i := len(adapters) - 1; i >= 0; i-- {
 		a := adapters[i]
