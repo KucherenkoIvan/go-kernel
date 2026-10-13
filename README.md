@@ -73,12 +73,15 @@ Then a regular `go get github.com/KucherenkoIvan/go-kernel@latest` works over SS
 No CI by choice — verification is local and encoded in the [Makefile](Makefile):
 
 ```sh
-make tools        # one-time: buf, protoc plugins, golangci-lint
+make tools        # one-time: buf, protoc plugins, golangci-lint; also installs the pinned govulncheck
 make test         # unit tests (integration tests self-skip)
-make lint         # gofmt + go vet + golangci-lint (.golangci.yml)
+make lint         # gofmt + go vet + golangci-lint + govulncheck (.golangci.yml)
+make vulncheck    # govulncheck alone: fail on a reachable known vulnerability (needs the network)
 make proto        # regenerate contracts
 make integration  # full suite; postgres/redpanda/redis self-provision via testcontainers
 ```
+
+The module's `go` directive is `1.26.0` — the floor `golang.org/x/net` v0.61.0 requires (Go 1.26). The `toolchain` directive pins a later patch release so the standard library `govulncheck` builds against has its security fixes; the floor itself stays as low as the dependencies allow, since it is imposed on every consumer.
 
 Integration tests resolve their infrastructure in order: explicit `TEST_*_URL` env (your own containers, fastest iteration) → testcontainers when `INTEGRATION=1` → skip. See [internal/testinfra](internal/testinfra/README.md).
 

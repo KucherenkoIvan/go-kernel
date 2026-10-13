@@ -24,7 +24,7 @@ go-kernel is a personal architecture kernel: one Go module of building blocks (d
 ```sh
 make help          # list targets
 make test          # unit tests (integration self-skips)
-make lint          # gofmt + go vet + golangci-lint — required before commit
+make lint          # gofmt + go vet + golangci-lint + govulncheck — required before commit
 make integration   # full suite against real infra (docker)
 make proto         # regenerate contracts after proto changes
 make tools         # one-time dev tooling install
