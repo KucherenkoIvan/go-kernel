@@ -3,8 +3,7 @@
 GOBIN := $(shell go env GOPATH)/bin
 
 # Pinned dev tool that needs a pinned version (govulncheck). Installed per
-# checkout into bin/tools via a stamp file, mirroring the per-checkout tool
-# pinning used in downstream projects. Bumping the version reinstalls it.
+# checkout into bin/tools via a stamp file; bumping the version reinstalls it.
 # govulncheck needs Go 1.26+ to build; an older local Go must leave
 # GOTOOLCHAIN at auto, or the install fails.
 GOVULNCHECK_VERSION := v1.9.0

@@ -81,7 +81,7 @@ make proto        # regenerate contracts
 make integration  # full suite; postgres/redpanda/redis self-provision via testcontainers
 ```
 
-The module's `go` directive is `1.26.0` — the floor `golang.org/x/net` v0.61.0 requires (Go 1.26). The `toolchain` directive pins a later patch release so the standard library `govulncheck` builds against has its security fixes; the floor itself stays as low as the dependencies allow, since it is imposed on every consumer.
+The module's `go` directive is `1.26.0` — the floor `golang.org/x/net` v0.61.0 requires (Go 1.26). The floor comes from `golang.org/x/net` v0.60.0+, the first version with the HTTP/2 fixes. The `toolchain` directive pins a later patch release so the standard library `govulncheck` builds against has its security fixes; it only applies when go-kernel is the main module (consumers ignore it). The floor itself stays as low as the dependencies allow, since it is imposed on every consumer.
 
 Integration tests resolve their infrastructure in order: explicit `TEST_*_URL` env (your own containers, fastest iteration) → testcontainers when `INTEGRATION=1` → skip. See [internal/testinfra](internal/testinfra/README.md).
 
