@@ -126,6 +126,17 @@ func (h *helper) waitFor(t *testing.T, line string) {
 	}
 }
 
+func (h *helper) waitForStderr(t *testing.T, want string) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for !strings.Contains(h.stderr.String(), want) {
+		if time.Now().After(deadline) {
+			t.Fatalf("helper stderr never contained %q; stderr:\n%s", want, h.stderr.String())
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
 func (h *helper) signal(t *testing.T, sig os.Signal) {
 	t.Helper()
 	if err := h.cmd.Process.Signal(sig); err != nil {
@@ -175,9 +186,9 @@ func TestRun_SecondSignalKillsHungClose(t *testing.T) {
 
 			h.signal(t, sig)
 			h.waitFor(t, "closing") // first signal: graceful shutdown reached Close
-			if !strings.Contains(h.stderr.String(), "signal again to force quit") {
-				t.Errorf("first signal must be logged through the injected logger; stderr:\n%s", h.stderr.String())
-			}
+			// stderr reaches the parent through a copy goroutine of its own, so
+			// it can lag the stdout marker above
+			h.waitForStderr(t, "signal again to force quit")
 
 			h.signal(t, sig)
 			assertKilledBy(t, h.wait(t), sig, h.stderr.String())
